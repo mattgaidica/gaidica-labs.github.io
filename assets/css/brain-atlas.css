@@ -715,7 +715,125 @@
   }
 }
 
+/* —— Site home (index) — same tokens + Raleway as atlas pages */
+.lab-site-home {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: clamp(1.5rem, 5vw, 2.75rem) max(1rem, env(safe-area-inset-left))
+    max(1.5rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-right));
+  font-family: "Raleway", system-ui, sans-serif;
+  font-weight: 300;
+  color: var(--atlas-text);
+  background: var(--atlas-bg);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.lab-site-home .site-home__inner {
+  width: 100%;
+  max-width: 22rem;
+  margin: 0 auto;
+}
+
+.lab-site-home .site-home__title {
+  font-size: clamp(1.4rem, 5vw, 1.95rem);
+  font-weight: 600;
+  text-align: center;
+  margin: 0 0 0.45rem;
+  letter-spacing: -0.02em;
+  color: var(--atlas-text);
+}
+
+.lab-site-home .site-home__lede {
+  text-align: center;
+  margin: 0 0 1.75rem;
+  font-size: 0.98rem;
+  color: #7a7a7a;
+}
+
+.lab-site-home .site-home__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.lab-site-home .site-home__link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 2.85rem;
+  padding: 0.75rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #eef2f0;
+  color: #2a3d34;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+  touch-action: manipulation;
+}
+
+.lab-site-home .site-home__link--stack {
+  flex-direction: column;
+  gap: 0.15rem;
+  padding-top: 0.65rem;
+  padding-bottom: 0.65rem;
+  min-height: 3.15rem;
+}
+
+.lab-site-home .site-home__link-primary {
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.lab-site-home .site-home__link-secondary {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #6f8f82;
+  letter-spacing: 0.02em;
+}
+
+.lab-site-home .site-home__link:hover {
+  background: #e2e9e5;
+  border-color: rgba(0, 0, 0, 0.14);
+  color: var(--atlas-accent);
+  box-shadow: 0 2px 10px rgba(45, 106, 79, 0.1);
+}
+
+.lab-site-home .site-home__link:hover .site-home__link-secondary {
+  color: var(--atlas-accent);
+}
+
+.lab-site-home .site-home__link:focus {
+  outline: none;
+}
+
+.lab-site-home .site-home__link:focus-visible {
+  outline: 2px solid var(--atlas-accent);
+  outline-offset: 3px;
+}
+
 @media print {
+  .lab-site-home .site-home__list {
+    gap: 0.4rem;
+  }
+
+  .lab-site-home .site-home__link {
+    box-shadow: none;
+    border-color: #ccc;
+  }
+
   .atlas-panel.page-break {
     page-break-after: always;
   }
