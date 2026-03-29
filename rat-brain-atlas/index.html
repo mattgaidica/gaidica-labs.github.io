@@ -1,0 +1,79 @@
+---
+layout: lab_standalone
+title: Rat Brain Atlas
+lab_css: css/atlas.css
+lab_js: js/atlas.js
+body_class: lab-rat-brain-atlas
+permalink: /labs/rat-brain-atlas/
+---
+
+<div class="atlas-inner">
+  <h1>Rat Brain Atlas</h1>
+  <p id="atlas-query-title" class="atlas-subtitle" hidden></p>
+  <p id="atlas-error" class="atlas-subtitle" style="color: #c1121f" hidden></p>
+
+  <form id="atlas-coord-form" class="atlas-form-row" method="get" action="" novalidate>
+    <div class="field">
+      <div class="input-wrap">
+        <span>ML</span>
+        <input id="input-ml" name="ml" type="text" inputmode="decimal" autocomplete="off" value="0" aria-label="ML (mm)">
+        <span class="suffix">mm</span>
+      </div>
+    </div>
+    <div class="field">
+      <div class="input-wrap">
+        <span>AP</span>
+        <input id="input-ap" name="ap" type="text" inputmode="decimal" autocomplete="off" value="0" aria-label="AP (mm)">
+        <span class="suffix">mm</span>
+      </div>
+    </div>
+    <div class="field">
+      <div class="input-wrap">
+        <span>DV</span>
+        <input id="input-dv" name="dv" type="text" inputmode="decimal" autocomplete="off" value="0" aria-label="DV (mm)">
+        <span class="suffix">mm</span>
+      </div>
+    </div>
+    <button type="submit">Submit</button>
+  </form>
+  <p id="atlas-form-error" class="atlas-form-error" role="alert" hidden></p>
+
+  <p class="atlas-links">
+    <a href="https://labs.gaidi.ca/mouse-brain-atlas/">Mouse Brain Atlas</a>
+    &bull;
+    <a href="?ml=2.7&amp;ap=.43&amp;dv=5.4">CPu caudate putamen (striatum)</a>
+  </p>
+
+  <hr>
+
+  <section class="atlas-panel page-break">
+    <h2>Coronal</h2>
+    <div class="figure">
+      <div id="coronal-dot" class="atlas-marker" aria-hidden="true"></div>
+      <img id="coronal-img" src="" alt="Coronal section">
+    </div>
+  </section>
+
+  <section class="atlas-panel page-break">
+    <h2>Sagittal</h2>
+    <div class="figure">
+      <div id="sagittal-dot" class="atlas-marker" aria-hidden="true"></div>
+      <img id="sagittal-img" src="" alt="Sagittal section">
+    </div>
+  </section>
+
+  <section class="atlas-panel">
+    <h2>Horizontal</h2>
+    <div class="figure">
+      <div id="horizontal-dot" class="atlas-marker" aria-hidden="true"></div>
+      <img id="horizontal-img" src="" alt="Horizontal section">
+    </div>
+  </section>
+
+  <hr>
+
+  <footer class="atlas-footer">
+    <p><strong>Atlas Source:</strong> Paxinos, George, and Charles Watson. <em>The rat brain in stereotaxic coordinates: hard cover edition.</em> Access Online via Elsevier, 2006.</p>
+    <p>A tool by <a href="{{ '/' | relative_url }}">Matt Gaidica</a></p>
+  </footer>
+</div>

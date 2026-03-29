@@ -1,0 +1,265 @@
+@import url("https://fonts.googleapis.com/css2?family=Raleway:wght@300;600&display=swap");
+
+:root {
+  --atlas-text: #5a5a5a;
+  --atlas-bg: #fafafa;
+  --atlas-accent: #2d6a4f;
+  --atlas-border: #d0d0d0;
+  --atlas-image-outline: rgba(0, 0, 0, 0.12);
+  --atlas-marker-line: #ef4444;
+  --atlas-marker-halo: rgba(255, 255, 255, 0.92);
+  --atlas-marker-center: #dc2626;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.lab-rat-brain-atlas {
+  margin: 0;
+  padding: 0 1rem 2rem;
+  font-family: "Raleway", system-ui, sans-serif;
+  font-weight: 300;
+  color: var(--atlas-text);
+  background: var(--atlas-bg);
+  line-height: 1.45;
+}
+
+.lab-rat-brain-atlas .atlas-inner {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.lab-rat-brain-atlas h1 {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 300;
+  text-align: center;
+  letter-spacing: -0.02em;
+  margin: 1.25rem 0 0.5rem;
+}
+
+.lab-rat-brain-atlas .atlas-subtitle {
+  text-align: center;
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+}
+
+.lab-rat-brain-atlas .atlas-form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  justify-content: center;
+  align-items: flex-end;
+  margin: 1rem 0;
+}
+
+.lab-rat-brain-atlas .field {
+  display: flex;
+  min-width: 0;
+}
+
+.lab-rat-brain-atlas .field .input-wrap {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--atlas-border);
+  border-radius: 4px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.lab-rat-brain-atlas .field .input-wrap:has(input[aria-invalid="true"]) {
+  border-color: var(--atlas-marker-line);
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.35);
+}
+
+.lab-rat-brain-atlas .field .input-wrap span {
+  padding: 0.4rem 0.5rem;
+  background: #eee;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  border-right: 1px solid var(--atlas-border);
+}
+
+.lab-rat-brain-atlas .field .input-wrap span.suffix {
+  border-right: none;
+  border-left: 1px solid var(--atlas-border);
+}
+
+.lab-rat-brain-atlas .field input[type="text"] {
+  width: 4.5rem;
+  border: none;
+  padding: 0.4rem 0.45rem;
+  font: inherit;
+  text-align: center;
+  color: var(--atlas-text);
+}
+
+.lab-rat-brain-atlas .field input:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 2px rgba(45, 106, 79, 0.35);
+}
+
+.lab-rat-brain-atlas button[type="submit"] {
+  font-family: inherit;
+  font-weight: 600;
+  padding: 0.5rem 1.1rem;
+  border: none;
+  border-radius: 4px;
+  background: var(--atlas-accent);
+  color: #fff;
+  cursor: pointer;
+}
+
+.lab-rat-brain-atlas button[type="submit"]:hover {
+  filter: brightness(1.05);
+}
+
+.lab-rat-brain-atlas .atlas-form-error {
+  text-align: center;
+  margin: -0.25rem 0 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--atlas-marker-line);
+}
+
+.lab-rat-brain-atlas .atlas-links {
+  text-align: center;
+  font-size: 0.8rem;
+  margin: 0.5rem 0 0;
+}
+
+.lab-rat-brain-atlas .atlas-links a {
+  color: var(--atlas-accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.lab-rat-brain-atlas .atlas-links a:hover {
+  text-decoration: underline;
+}
+
+.lab-rat-brain-atlas hr {
+  border: none;
+  border-top: 1px solid var(--atlas-border);
+  margin: 1.5rem 0;
+}
+
+.lab-rat-brain-atlas .atlas-panel {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.lab-rat-brain-atlas .atlas-panel h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 0 0 0.35rem;
+}
+
+.lab-rat-brain-atlas .figure {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: top;
+}
+
+.lab-rat-brain-atlas .figure img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--atlas-image-outline);
+  border-radius: 2px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+/* Stereotaxic-style crosshair: reads clearly on light and dark tissue */
+.lab-rat-brain-atlas .atlas-marker {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 31px;
+  height: 31px;
+  margin: 0;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  background: radial-gradient(
+    circle at center,
+    var(--atlas-marker-center) 0 2.5px,
+    transparent 2.5px
+  );
+}
+
+.lab-rat-brain-atlas .atlas-marker::before,
+.lab-rat-brain-atlas .atlas-marker::after {
+  content: "";
+  position: absolute;
+  background: var(--atlas-marker-line);
+  border-radius: 1px;
+  box-shadow:
+    0 0 0 1px var(--atlas-marker-halo),
+    0 0 0 2px rgba(0, 0, 0, 0.18);
+}
+
+.lab-rat-brain-atlas .atlas-marker::before {
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  transform: translateY(-50%);
+}
+
+.lab-rat-brain-atlas .atlas-marker::after {
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-50%);
+}
+
+.lab-rat-brain-atlas .atlas-footer {
+  text-align: center;
+  font-size: 0.9rem;
+  margin-top: 1rem;
+}
+
+.lab-rat-brain-atlas .atlas-footer a {
+  color: var(--atlas-accent);
+  font-weight: 600;
+}
+
+@media print {
+  .atlas-panel.page-break {
+    page-break-after: always;
+  }
+
+  .atlas-links,
+  .atlas-form-error,
+  button[type="submit"] {
+    display: none !important;
+  }
+
+  .lab-rat-brain-atlas .atlas-form-row {
+    justify-content: center;
+    margin-bottom: 0.75rem;
+  }
+
+  .lab-rat-brain-atlas .field input[type="text"] {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .lab-rat-brain-atlas .atlas-marker,
+  .lab-rat-brain-atlas .atlas-marker::before,
+  .lab-rat-brain-atlas .atlas-marker::after {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+@page {
+  size: 8.5in 11in;
+  margin: 0.5in;
+}
