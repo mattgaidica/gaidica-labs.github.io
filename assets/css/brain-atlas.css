@@ -17,7 +17,7 @@
   box-sizing: border-box;
 }
 
-.lab-rat-brain-atlas {
+.lab-brain-atlas {
   margin: 0;
   padding: 0 1rem 2rem;
   font-family: "Raleway", system-ui, sans-serif;
@@ -27,12 +27,12 @@
   line-height: 1.45;
 }
 
-.lab-rat-brain-atlas .atlas-inner {
+.lab-brain-atlas .atlas-inner {
   max-width: 960px;
   margin: 0 auto;
 }
 
-.lab-rat-brain-atlas h1 {
+.lab-brain-atlas h1 {
   font-size: clamp(1.75rem, 4vw, 2.5rem);
   font-weight: 300;
   text-align: center;
@@ -40,13 +40,13 @@
   margin: 1.25rem 0 0.5rem;
 }
 
-.lab-rat-brain-atlas .atlas-subtitle {
+.lab-brain-atlas .atlas-subtitle {
   text-align: center;
   margin: 0 0 1rem;
   font-size: 0.95rem;
 }
 
-.lab-rat-brain-atlas .atlas-form-row {
+.lab-brain-atlas .atlas-form-row {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem 1rem;
@@ -55,12 +55,12 @@
   margin: 1rem 0;
 }
 
-.lab-rat-brain-atlas .field {
+.lab-brain-atlas .field {
   display: flex;
   min-width: 0;
 }
 
-.lab-rat-brain-atlas .field .input-wrap {
+.lab-brain-atlas .field .input-wrap {
   display: flex;
   align-items: stretch;
   border: 1px solid var(--atlas-border);
@@ -69,12 +69,12 @@
   background: #fff;
 }
 
-.lab-rat-brain-atlas .field .input-wrap:has(input[aria-invalid="true"]) {
+.lab-brain-atlas .field .input-wrap:has(input[aria-invalid="true"]) {
   border-color: var(--atlas-marker-line);
   box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.35);
 }
 
-.lab-rat-brain-atlas .field .input-wrap span {
+.lab-brain-atlas .field .input-wrap span {
   padding: 0.4rem 0.5rem;
   background: #eee;
   font-size: 0.8rem;
@@ -84,12 +84,12 @@
   border-right: 1px solid var(--atlas-border);
 }
 
-.lab-rat-brain-atlas .field .input-wrap span.suffix {
+.lab-brain-atlas .field .input-wrap span.suffix {
   border-right: none;
   border-left: 1px solid var(--atlas-border);
 }
 
-.lab-rat-brain-atlas .field input[type="text"] {
+.lab-brain-atlas .field input[type="text"] {
   width: 4.5rem;
   border: none;
   padding: 0.4rem 0.45rem;
@@ -98,12 +98,12 @@
   color: var(--atlas-text);
 }
 
-.lab-rat-brain-atlas .field input:focus {
+.lab-brain-atlas .field input:focus {
   outline: none;
   box-shadow: inset 0 0 0 2px rgba(45, 106, 79, 0.35);
 }
 
-.lab-rat-brain-atlas button[type="submit"] {
+.lab-brain-atlas button[type="submit"] {
   font-family: inherit;
   font-weight: 600;
   padding: 0.5rem 1.1rem;
@@ -114,11 +114,11 @@
   cursor: pointer;
 }
 
-.lab-rat-brain-atlas button[type="submit"]:hover {
+.lab-brain-atlas button[type="submit"]:hover {
   filter: brightness(1.05);
 }
 
-.lab-rat-brain-atlas .atlas-form-error {
+.lab-brain-atlas .atlas-form-error {
   text-align: center;
   margin: -0.25rem 0 0.75rem;
   font-size: 0.875rem;
@@ -126,47 +126,47 @@
   color: var(--atlas-marker-line);
 }
 
-.lab-rat-brain-atlas .atlas-links {
+.lab-brain-atlas .atlas-links {
   text-align: center;
   font-size: 0.8rem;
   margin: 0.5rem 0 0;
 }
 
-.lab-rat-brain-atlas .atlas-links a {
+.lab-brain-atlas .atlas-links a {
   color: var(--atlas-accent);
   font-weight: 600;
   text-decoration: none;
 }
 
-.lab-rat-brain-atlas .atlas-links a:hover {
+.lab-brain-atlas .atlas-links a:hover {
   text-decoration: underline;
 }
 
-.lab-rat-brain-atlas hr {
+.lab-brain-atlas hr {
   border: none;
   border-top: 1px solid var(--atlas-border);
   margin: 1.5rem 0;
 }
 
-.lab-rat-brain-atlas .atlas-panel {
+.lab-brain-atlas .atlas-panel {
   text-align: center;
   margin-bottom: 1.5rem;
 }
 
-.lab-rat-brain-atlas .atlas-panel h2 {
+.lab-brain-atlas .atlas-panel h2 {
   font-size: 1.15rem;
   font-weight: 600;
   margin: 0 0 0.35rem;
 }
 
-.lab-rat-brain-atlas .figure {
+.lab-brain-atlas .figure {
   position: relative;
   display: inline-block;
   max-width: 100%;
   vertical-align: top;
 }
 
-.lab-rat-brain-atlas .figure img {
+.lab-brain-atlas .figure img {
   display: block;
   max-width: 100%;
   height: auto;
@@ -176,7 +176,7 @@
 }
 
 /* Stereotaxic-style crosshair: reads clearly on light and dark tissue */
-.lab-rat-brain-atlas .atlas-marker {
+.lab-brain-atlas .atlas-marker {
   position: absolute;
   left: 0;
   top: 0;
@@ -192,8 +192,8 @@
   );
 }
 
-.lab-rat-brain-atlas .atlas-marker::before,
-.lab-rat-brain-atlas .atlas-marker::after {
+.lab-brain-atlas .atlas-marker::before,
+.lab-brain-atlas .atlas-marker::after {
   content: "";
   position: absolute;
   background: var(--atlas-marker-line);
@@ -203,7 +203,7 @@
     0 0 0 2px rgba(0, 0, 0, 0.18);
 }
 
-.lab-rat-brain-atlas .atlas-marker::before {
+.lab-brain-atlas .atlas-marker::before {
   left: 0;
   right: 0;
   top: 50%;
@@ -211,7 +211,7 @@
   transform: translateY(-50%);
 }
 
-.lab-rat-brain-atlas .atlas-marker::after {
+.lab-brain-atlas .atlas-marker::after {
   top: 0;
   bottom: 0;
   left: 50%;
@@ -219,13 +219,13 @@
   transform: translateX(-50%);
 }
 
-.lab-rat-brain-atlas .atlas-footer {
+.lab-brain-atlas .atlas-footer {
   text-align: center;
   font-size: 0.9rem;
   margin-top: 1rem;
 }
 
-.lab-rat-brain-atlas .atlas-footer a {
+.lab-brain-atlas .atlas-footer a {
   color: var(--atlas-accent);
   font-weight: 600;
 }
@@ -241,19 +241,19 @@
     display: none !important;
   }
 
-  .lab-rat-brain-atlas .atlas-form-row {
+  .lab-brain-atlas .atlas-form-row {
     justify-content: center;
     margin-bottom: 0.75rem;
   }
 
-  .lab-rat-brain-atlas .field input[type="text"] {
+  .lab-brain-atlas .field input[type="text"] {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
-  .lab-rat-brain-atlas .atlas-marker,
-  .lab-rat-brain-atlas .atlas-marker::before,
-  .lab-rat-brain-atlas .atlas-marker::after {
+  .lab-brain-atlas .atlas-marker,
+  .lab-brain-atlas .atlas-marker::before,
+  .lab-brain-atlas .atlas-marker::after {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }

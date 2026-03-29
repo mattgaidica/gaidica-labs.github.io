@@ -1,4 +1,4 @@
-(function () {
+(function (global) {
   "use strict";
 
   function parseCsv(text) {
@@ -35,36 +35,6 @@
     return best;
   }
 
-  function getAtlas(ap, ml, dv, rows) {
-    dv = Math.abs(dv);
-
-    var cor = closestByType(rows, "coronal", ap);
-    var sag = closestByType(rows, "sagittal", ml);
-    var hor = closestByType(rows, "horizontal", -dv);
-
-    if (!cor || !sag || !hor) {
-      throw new Error("Atlas CSV missing required section types.");
-    }
-
-    return {
-      coronal: {
-        imageUrl: "images/Rat_Brain_Atlas_" + cor.index + ".jpg",
-        left: cor.x0 + ml * cor.pxx,
-        top: cor.y0 + dv * cor.pxy,
-      },
-      sagittal: {
-        imageUrl: "images/Rat_Brain_Atlas_" + sag.index + ".jpg",
-        left: sag.x0 + -ap * sag.pxx,
-        top: sag.y0 + dv * sag.pxy,
-      },
-      horizontal: {
-        imageUrl: "images/Rat_Brain_Atlas_" + hor.index + ".jpg",
-        left: hor.x0 + -ap * hor.pxx,
-        top: hor.y0 + -ml * hor.pxy,
-      },
-    };
-  }
-
   function parseCoord(name, params) {
     var v = params.get(name);
     if (v === null || v === "") return 0;
@@ -93,37 +63,6 @@
     img.src = data.imageUrl;
     img.alt = prefix + " section";
     layoutDot(img, dot, data.left, data.top);
-  }
-
-  function main(rows) {
-    var params = new URLSearchParams(window.location.search);
-    var ap = parseCoord("ap", params);
-    var ml = parseCoord("ml", params);
-    var dv = parseCoord("dv", params);
-
-    var apInput = document.getElementById("input-ap");
-    var mlInput = document.getElementById("input-ml");
-    var dvInput = document.getElementById("input-dv");
-    if (mlInput) mlInput.value = params.has("ml") ? params.get("ml") : String(ml);
-    if (apInput) apInput.value = params.has("ap") ? params.get("ap") : String(ap);
-    if (dvInput) dvInput.value = params.has("dv") ? params.get("dv") : String(dv);
-
-    var titleEl = document.getElementById("atlas-query-title");
-    var titleParam = params.get("title");
-    if (titleEl) {
-      if (titleParam) {
-        titleEl.textContent = titleParam;
-        titleEl.hidden = false;
-      } else {
-        titleEl.textContent = "";
-        titleEl.hidden = true;
-      }
-    }
-
-    var atlas = getAtlas(ap, ml, dv, rows);
-    applyPanel("coronal", atlas.coronal);
-    applyPanel("sagittal", atlas.sagittal);
-    applyPanel("horizontal", atlas.horizontal);
   }
 
   var FLOAT_RE = /^[+-]?(?:\d+\.\d*|\.\d+|\d+)(?:[eE][+-]?\d+)?$/;
@@ -193,14 +132,61 @@
     }
   }
 
-  function run() {
-    fetch("rat-brain-atlas.csv", { credentials: "same-origin" })
+  function syncInputsFromParams(params) {
+    var ap = parseCoord("ap", params);
+    var ml = parseCoord("ml", params);
+    var dv = parseCoord("dv", params);
+    var apInput = document.getElementById("input-ap");
+    var mlInput = document.getElementById("input-ml");
+    var dvInput = document.getElementById("input-dv");
+    if (mlInput) mlInput.value = params.has("ml") ? params.get("ml") : String(ml);
+    if (apInput) apInput.value = params.has("ap") ? params.get("ap") : String(ap);
+    if (dvInput) dvInput.value = params.has("dv") ? params.get("dv") : String(dv);
+  }
+
+  function applyQueryTitle(params) {
+    var titleEl = document.getElementById("atlas-query-title");
+    if (!titleEl) return;
+    var titleParam = params.get("title");
+    if (titleParam) {
+      titleEl.textContent = titleParam;
+      titleEl.hidden = false;
+    } else {
+      titleEl.textContent = "";
+      titleEl.hidden = true;
+    }
+  }
+
+  /**
+   * @param {object} config
+   * @param {string} config.csvUrl
+   * @param {function(number, number, number, Array): object} config.getAtlas
+   * @param {string[]} config.panels
+   * @param {boolean} [config.queryTitle]
+   */
+  function boot(config) {
+    initFormValidation();
+
+    fetch(config.csvUrl, { credentials: "same-origin" })
       .then(function (r) {
         if (!r.ok) throw new Error("Failed to load atlas data.");
         return r.text();
       })
       .then(function (text) {
-        main(parseCsv(text));
+        var rows = parseCsv(text);
+        var params = new URLSearchParams(window.location.search);
+        var ap = parseCoord("ap", params);
+        var ml = parseCoord("ml", params);
+        var dv = parseCoord("dv", params);
+
+        syncInputsFromParams(params);
+        if (config.queryTitle !== false) applyQueryTitle(params);
+
+        var atlas = config.getAtlas(ap, ml, dv, rows);
+        for (var i = 0; i < config.panels.length; i++) {
+          var key = config.panels[i];
+          applyPanel(key, atlas[key]);
+        }
       })
       .catch(function (e) {
         console.error(e);
@@ -212,14 +198,9 @@
       });
   }
 
-  function boot() {
-    initFormValidation();
-    run();
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", boot);
-  } else {
-    boot();
-  }
-})();
+  global.BrainAtlasCommon = {
+    boot: boot,
+    parseCsv: parseCsv,
+    closestByType: closestByType,
+  };
+})(typeof window !== "undefined" ? window : this);
