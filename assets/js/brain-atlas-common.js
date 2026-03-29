@@ -157,6 +157,196 @@
     }
   }
 
+  var lastRows = null;
+  var lastConfig = null;
+  var coordsChangeListeners = [];
+  var sliceNavClickBound = false;
+
+  function readInputsAsNumbers() {
+    var mlEl = document.getElementById("input-ml");
+    var apEl = document.getElementById("input-ap");
+    var dvEl = document.getElementById("input-dv");
+    if (!mlEl || !apEl || !dvEl) return null;
+    var ml = parseFloat(mlEl.value);
+    var ap = parseFloat(apEl.value);
+    var dv = parseFloat(dvEl.value);
+    if (!Number.isFinite(ml)) ml = 0;
+    if (!Number.isFinite(ap)) ap = 0;
+    if (!Number.isFinite(dv)) dv = 0;
+    return { ml: ml, ap: ap, dv: dv };
+  }
+
+  function formatCoordForInput(n) {
+    if (!Number.isFinite(n)) return "0";
+    var t = Number(n);
+    if (Math.abs(t) >= 1e4 || (Math.abs(t) < 1e-4 && t !== 0)) return String(t);
+    var s = t.toFixed(4).replace(/\.?0+$/, "");
+    return s === "-0" ? "0" : s;
+  }
+
+  function renderAtlasView(rows, config, ap, ml, dv) {
+    var atlas = config.getAtlas(ap, ml, dv, rows);
+    for (var i = 0; i < config.panels.length; i++) {
+      var key = config.panels[i];
+      applyPanel(key, atlas[key]);
+    }
+  }
+
+  function redrawAtlasFromInputs() {
+    if (!lastRows || !lastConfig) return;
+    var nums = readInputsAsNumbers();
+    if (!nums) return;
+    renderAtlasView(lastRows, lastConfig, nums.ap, nums.ml, nums.dv);
+    updateSliceNavButtonStates();
+  }
+
+  function replaceUrlFromInputs() {
+    var mlEl = document.getElementById("input-ml");
+    var apEl = document.getElementById("input-ap");
+    var dvEl = document.getElementById("input-dv");
+    if (!mlEl || !apEl || !dvEl) return;
+    if (!window.history || !window.history.replaceState) return;
+    var q = new URLSearchParams(window.location.search);
+    q.set("ml", String(mlEl.value).trim() || "0");
+    q.set("ap", String(apEl.value).trim() || "0");
+    q.set("dv", String(dvEl.value).trim() || "0");
+    var path = window.location.pathname;
+    var qs = q.toString();
+    window.history.replaceState(null, "", path + (qs ? "?" + qs : ""));
+    for (var i = 0; i < coordsChangeListeners.length; i++) {
+      try {
+        coordsChangeListeners[i]();
+      } catch (err) {}
+    }
+  }
+
+  function uniqueSortedDepths(rows, planeType) {
+    var seen = {};
+    var out = [];
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      if (r.type !== planeType) continue;
+      var d = r.depth;
+      if (!Number.isFinite(d)) continue;
+      var key = String(d);
+      if (seen[key]) continue;
+      seen[key] = true;
+      out.push(d);
+    }
+    out.sort(function (a, b) {
+      return a - b;
+    });
+    return out;
+  }
+
+  function closestDepthIndex(depths, value) {
+    if (!depths.length) return -1;
+    var best = 0;
+    var bestDist = Infinity;
+    for (var i = 0; i < depths.length; i++) {
+      var di = Math.abs(depths[i] - value);
+      if (di < bestDist) {
+        bestDist = di;
+        best = i;
+      }
+    }
+    return best;
+  }
+
+  function horizontalLookupFromDv(dvNum) {
+    return -Math.abs(dvNum);
+  }
+
+  function applySliceDepthToInputs(plane, depth) {
+    var mlEl = document.getElementById("input-ml");
+    var apEl = document.getElementById("input-ap");
+    var dvEl = document.getElementById("input-dv");
+    if (!mlEl || !apEl || !dvEl) return;
+    if (plane === "coronal") {
+      apEl.value = formatCoordForInput(depth);
+    } else if (plane === "sagittal") {
+      mlEl.value = formatCoordForInput(depth);
+    } else if (plane === "horizontal") {
+      dvEl.value = formatCoordForInput(-depth);
+    }
+  }
+
+  function updateSliceNavButtonStates() {
+    if (!lastRows) return;
+    var nums = readInputsAsNumbers();
+    if (!nums) return;
+    var navs = document.querySelectorAll(".atlas-slice-nav");
+    for (var n = 0; n < navs.length; n++) {
+      var nav = navs[n];
+      var plane = nav.getAttribute("data-plane");
+      if (!plane) continue;
+      var depths = uniqueSortedDepths(lastRows, plane);
+      var prevB = nav.querySelector('[data-dir="prev"]');
+      var nextB = nav.querySelector('[data-dir="next"]');
+      if (!depths.length) {
+        if (prevB) prevB.disabled = true;
+        if (nextB) nextB.disabled = true;
+        continue;
+      }
+      var lookupVal;
+      if (plane === "coronal") lookupVal = nums.ap;
+      else if (plane === "sagittal") lookupVal = nums.ml;
+      else lookupVal = horizontalLookupFromDv(nums.dv);
+
+      var idx = closestDepthIndex(depths, lookupVal);
+      var atMin = idx <= 0;
+      var atMax = idx >= depths.length - 1;
+      /* Coronal: stepping direction matches atlas plate order (prev/next flipped vs sorted depth). */
+      if (plane === "coronal") {
+        if (prevB) prevB.disabled = atMax;
+        if (nextB) nextB.disabled = atMin;
+      } else {
+        if (prevB) prevB.disabled = atMin;
+        if (nextB) nextB.disabled = atMax;
+      }
+    }
+  }
+
+  function initSliceNavigation() {
+    if (sliceNavClickBound) return;
+    var inner = document.querySelector(".atlas-inner");
+    if (!inner || !lastRows || !lastConfig) return;
+    if (!document.querySelector(".atlas-slice-nav")) return;
+    sliceNavClickBound = true;
+
+    inner.addEventListener("click", function (e) {
+      var btn = e.target.closest(".atlas-slice-nav__btn");
+      if (!btn || btn.disabled) return;
+      var wrap = btn.closest(".atlas-slice-nav");
+      if (!wrap) return;
+      var plane = wrap.getAttribute("data-plane");
+      var dir = btn.getAttribute("data-dir");
+      if (!plane || !dir) return;
+
+      var depths = uniqueSortedDepths(lastRows, plane);
+      if (!depths.length) return;
+
+      var nums = readInputsAsNumbers();
+      if (!nums) return;
+
+      var lookupVal;
+      if (plane === "coronal") lookupVal = nums.ap;
+      else if (plane === "sagittal") lookupVal = nums.ml;
+      else lookupVal = horizontalLookupFromDv(nums.dv);
+
+      var idx = closestDepthIndex(depths, lookupVal);
+      var step = dir === "prev" ? -1 : 1;
+      if (plane === "coronal") step = -step;
+      idx += step;
+
+      if (idx < 0 || idx >= depths.length) return;
+
+      applySliceDepthToInputs(plane, depths[idx]);
+      redrawAtlasFromInputs();
+      replaceUrlFromInputs();
+    });
+  }
+
   /**
    * @param {object} config
    * @param {string} config.csvUrl
@@ -173,20 +363,20 @@
         return r.text();
       })
       .then(function (text) {
-        var rows = parseCsv(text);
-        var params = new URLSearchParams(window.location.search);
-        var ap = parseCoord("ap", params);
-        var ml = parseCoord("ml", params);
-        var dv = parseCoord("dv", params);
+        lastRows = parseCsv(text);
+        lastConfig = config;
 
+        var params = new URLSearchParams(window.location.search);
         syncInputsFromParams(params);
         if (config.queryTitle !== false) applyQueryTitle(params);
 
-        var atlas = config.getAtlas(ap, ml, dv, rows);
-        for (var i = 0; i < config.panels.length; i++) {
-          var key = config.panels[i];
-          applyPanel(key, atlas[key]);
+        var nums = readInputsAsNumbers();
+        if (nums) {
+          renderAtlasView(lastRows, lastConfig, nums.ap, nums.ml, nums.dv);
         }
+
+        initSliceNavigation();
+        updateSliceNavButtonStates();
       })
       .catch(function (e) {
         console.error(e);
@@ -373,6 +563,10 @@
     boot: boot,
     parseCsv: parseCsv,
     closestByType: closestByType,
+    redrawAtlasFromInputs: redrawAtlasFromInputs,
+    onAtlasCoordsChanged: function (fn) {
+      if (typeof fn === "function") coordsChangeListeners.push(fn);
+    },
   };
 
   function initBrainAtlasUi() {

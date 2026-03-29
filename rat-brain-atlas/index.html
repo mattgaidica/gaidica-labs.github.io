@@ -48,7 +48,10 @@ atlas_cite_book: "Paxinos, George, and Charles Watson. The rat brain in stereota
   <hr>
 
   <section class="atlas-panel page-break">
-    <h2>Coronal</h2>
+    <h2 class="atlas-panel__title">
+      <span class="atlas-panel__title-text">Coronal</span>
+      {% include brain-atlas-slice-nav.html plane='coronal' %}
+    </h2>
     <div class="figure">
       <div id="coronal-dot" class="atlas-marker" aria-hidden="true"></div>
       <img id="coronal-img" src="" alt="Coronal section">
@@ -56,7 +59,10 @@ atlas_cite_book: "Paxinos, George, and Charles Watson. The rat brain in stereota
   </section>
 
   <section class="atlas-panel page-break">
-    <h2>Sagittal</h2>
+    <h2 class="atlas-panel__title">
+      <span class="atlas-panel__title-text">Sagittal</span>
+      {% include brain-atlas-slice-nav.html plane='sagittal' %}
+    </h2>
     <div class="figure">
       <div id="sagittal-dot" class="atlas-marker" aria-hidden="true"></div>
       <img id="sagittal-img" src="" alt="Sagittal section">
@@ -64,7 +70,10 @@ atlas_cite_book: "Paxinos, George, and Charles Watson. The rat brain in stereota
   </section>
 
   <section class="atlas-panel">
-    <h2>Horizontal</h2>
+    <h2 class="atlas-panel__title">
+      <span class="atlas-panel__title-text">Horizontal</span>
+      {% include brain-atlas-slice-nav.html plane='horizontal' %}
+    </h2>
     <div class="figure">
       <div id="horizontal-dot" class="atlas-marker" aria-hidden="true"></div>
       <img id="horizontal-img" src="" alt="Horizontal section">

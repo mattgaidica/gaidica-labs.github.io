@@ -48,7 +48,10 @@ atlas_cite_book: "Paxinos, George, and Keith B.J. Franklin. The mouse brain in s
   <hr>
 
   <section class="atlas-panel page-break">
-    <h2>Coronal</h2>
+    <h2 class="atlas-panel__title">
+      <span class="atlas-panel__title-text">Coronal</span>
+      {% include brain-atlas-slice-nav.html plane='coronal' %}
+    </h2>
     <div class="figure">
       <div id="coronal-dot" class="atlas-marker" aria-hidden="true"></div>
       <img id="coronal-img" src="" alt="Coronal section">
@@ -56,7 +59,10 @@ atlas_cite_book: "Paxinos, George, and Keith B.J. Franklin. The mouse brain in s
   </section>
 
   <section class="atlas-panel">
-    <h2>Sagittal</h2>
+    <h2 class="atlas-panel__title">
+      <span class="atlas-panel__title-text">Sagittal</span>
+      {% include brain-atlas-slice-nav.html plane='sagittal' %}
+    </h2>
     <div class="figure">
       <div id="sagittal-dot" class="atlas-marker" aria-hidden="true"></div>
       <img id="sagittal-img" src="" alt="Sagittal section">

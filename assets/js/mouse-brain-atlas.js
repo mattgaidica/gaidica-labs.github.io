@@ -102,6 +102,9 @@
       }
     });
 
+    if (C.onAtlasCoordsChanged) {
+      C.onAtlasCoordsChanged(syncSelectFromUrl);
+    }
     syncSelectFromUrl();
   }
 
