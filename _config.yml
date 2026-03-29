@@ -1,0 +1,5 @@
+theme: jekyll-theme-dinky
+github_username: mattgaidica
+
+# Set your GA4 Measurement ID (e.g. G-XXXXXXXXXX) to enable analytics on standalone lab pages.
+ga4_measurement_id: G-DRLK4MJJKG

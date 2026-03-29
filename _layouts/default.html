@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Matt Gaidica">
+    <title>{{ page.title | default: "Lab" | escape }}</title>
+    <base href="{{ page.url | relative_url }}">
+    {% if page.lab_css %}
+    <link rel="stylesheet" href="{{ page.lab_css }}">
+    {% endif %}
+    {% if site.ga4_measurement_id %}
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ site.ga4_measurement_id }}"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', '{{ site.ga4_measurement_id }}');
+    </script>
+    {% endif %}
+</head>
+
+<body class="{{ page.body_class }}">
+    {{ content }}
+    {% if page.lab_js %}
+    <script src="{{ page.lab_js }}" defer></script>
+    {% endif %}
+</body>
+
+</html>
+
