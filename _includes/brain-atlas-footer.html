@@ -1,0 +1,13 @@
+<section class="atlas-reference" aria-labelledby="atlas-citation-heading">
+  <h2 id="atlas-citation-heading" class="atlas-sr-only">Atlas reference and citation</h2>
+  <div class="atlas-source-md">{{ page.atlas_source_md | markdownify }}</div>
+  <button type="button" class="atlas-cite-btn" id="atlas-cite-btn">
+    Cite this page
+  </button>
+  <p id="atlas-cite-status" class="atlas-cite-status" role="status" aria-live="polite" hidden></p>
+  <script type="application/json" id="atlas-cite-json" aria-hidden="true">{"book":{{ page.atlas_cite_book | jsonify }},"toolTitle":{{ page.title | jsonify }}}</script>
+</section>
+
+<footer class="atlas-colophon atlas-colophon--fixed">
+  <p>A tool by <a href="{{ '/' | relative_url }}">Matt Gaidica</a></p>
+</footer>

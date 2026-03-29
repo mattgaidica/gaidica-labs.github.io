@@ -1,0 +1,53 @@
+# Approximate stereotaxic coordinates (rat, Paxinos-style). Midpoints used where ranges were given.
+# ML uses positive hemisphere; mirror for contralateral. DV negative = ventral per common atlas convention.
+- label: "User region selected"
+- label: "Prelimbic cortex (PrL)"
+  ap: 3.2
+  ml: 0.8
+  dv: -3.35
+  notes: "Shallow injections can target cortex proper; deeper values are used in some tracing studies."
+- label: "Infralimbic cortex (IL)"
+  ap: 2.7
+  ml: 0.8
+  dv: -5.1
+  notes: "Common ventromedial PFC target."
+- label: "Anterior cingulate cortex (ACC)"
+  ap: 1.6
+  ml: 0.6
+  dv: -3.5
+  notes: "Useful frontal control target."
+- label: "Nucleus accumbens core (NAc core)"
+  ap: 1.45
+  ml: 1.7
+  dv: -6.85
+  notes: "Midpoint of common AP / ML / DV ranges across experiments."
+- label: "Nucleus accumbens medial shell"
+  ap: 1.7
+  ml: 0.7
+  dv: -7.5
+  notes: "Medial shell target from Paxinos-style tracing work."
+- label: "Basolateral amygdala (BLA)"
+  ap: -2.45
+  ml: 4.8
+  dv: -8.2
+  notes: "Midpoint of common cannula/viral study ranges."
+- label: "Dorsal CA1"
+  ap: -3.75
+  ml: 2.65
+  dv: -2.575
+  notes: "Midpoint of typical dorsal hippocampal CA1 window."
+- label: "Paraventricular nucleus (PVN, hypothalamus)"
+  ap: -1.35
+  ml: 0.2
+  dv: -8.2
+  notes: "Midline target; often hit at two AP levels."
+- label: "Mediodorsal thalamus (MD)"
+  ap: -2.2
+  ml: 0.7
+  dv: -6.2
+  notes: "Common lesion/cannula target."
+- label: "Ventral tegmental area (VTA)"
+  ap: -5.0
+  ml: 0.8
+  dv: -8.3
+  notes: "Very common midbrain reward target."

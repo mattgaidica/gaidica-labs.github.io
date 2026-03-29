@@ -1,0 +1,18 @@
+<header class="atlas-page-header">
+  <h1 class="atlas-sr-only">{{ page.title }}</h1>
+  <nav class="atlas-species-toggle" aria-label="Choose atlas">
+    <div class="atlas-species-toggle__inner">
+      {% if page.url contains '/rat-brain-atlas' %}
+      <span class="atlas-species-toggle__option atlas-species-toggle__option--active" aria-current="page">Rat Brain Atlas</span>
+      {% else %}
+      <a class="atlas-species-toggle__option atlas-species-toggle__option--link" href="{{ '/rat-brain-atlas/' | relative_url }}">Rat Brain Atlas</a>
+      {% endif %}
+      <span class="atlas-species-toggle__divider" aria-hidden="true"></span>
+      {% if page.url contains '/mouse-brain-atlas' %}
+      <span class="atlas-species-toggle__option atlas-species-toggle__option--active" aria-current="page">Mouse Brain Atlas</span>
+      {% else %}
+      <a class="atlas-species-toggle__option atlas-species-toggle__option--link" href="{{ '/mouse-brain-atlas/' | relative_url }}">Mouse Brain Atlas</a>
+      {% endif %}
+    </div>
+  </nav>
+</header>

@@ -1,0 +1,48 @@
+# Approximate stereotaxic coordinates (mouse, Paxinos–Franklin style). Midpoints used where ranges were given.
+# ML positive = one hemisphere; mirror for contralateral. DV negative = ventral per common atlas convention.
+- label: "User region selected"
+- label: "Prelimbic cortex (PL)"
+  ap: 2.75
+  ml: 0.3
+  dv: -1.55
+  notes: "Common mouse PL target."
+- label: "Anterior cingulate cortex (ACC)"
+  ap: 1.1
+  ml: 0.4
+  dv: -2.2
+  notes: "Dorsal medial frontal target."
+- label: "Nucleus accumbens shell (NAc shell)"
+  ap: 1.65
+  ml: 0.9
+  dv: -4.8
+  notes: "Wide reported DV window; verify angle and reference for your protocol."
+- label: "Basolateral amygdala (BLA)"
+  ap: -1.6
+  ml: 2.9
+  dv: -4.675
+  notes: "Midpoint of common viral/cannula window."
+- label: "Dorsal CA1"
+  ap: -1.65
+  ml: 1.2
+  dv: -1.52
+  notes: "Allen-based coordinate commonly used for dCA1."
+- label: "Dorsomedial striatum (DMS)"
+  ap: 1.15
+  ml: 0.95
+  dv: -2.9
+  notes: "Good starting range for DMS."
+- label: "Paraventricular thalamus (PVT)"
+  ap: -1.6
+  ml: 0.0
+  dv: -2.9
+  notes: "Midline thalamic target."
+- label: "Mediodorsal thalamus (MD)"
+  ap: -1.275
+  ml: 1.04
+  dv: -3.05
+  notes: "Depends on anterior/posterior MD and implant type."
+- label: "Ventral tegmental area (VTA)"
+  ap: -3.5
+  ml: 0.3
+  dv: -4.3
+  notes: "Common mouse VTA target."

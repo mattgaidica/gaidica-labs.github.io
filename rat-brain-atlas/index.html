@@ -7,10 +7,13 @@ lab_scripts:
   - /assets/js/rat-brain-atlas.js
 body_class: lab-brain-atlas
 permalink: /rat-brain-atlas/
+atlas_source_md: |
+  **Atlas Source:** Paxinos, George, and Charles Watson. *The rat brain in stereotaxic coordinates: hard cover edition.* Access Online via Elsevier, 2006.
+atlas_cite_book: "Paxinos, George, and Charles Watson. The rat brain in stereotaxic coordinates: hard cover edition. Access Online via Elsevier, 2006."
 ---
 
 <div class="atlas-inner">
-  <h1>Rat Brain Atlas</h1>
+  {% include brain-atlas-header.html %}
   <p id="atlas-query-title" class="atlas-subtitle" hidden></p>
   <p id="atlas-error" class="atlas-subtitle" style="color: #c1121f" hidden></p>
 
@@ -40,11 +43,7 @@ permalink: /rat-brain-atlas/
   </form>
   <p id="atlas-form-error" class="atlas-form-error" role="alert" hidden></p>
 
-  <p class="atlas-links">
-    <a href="{{ '/mouse-brain-atlas/' | relative_url }}">Mouse Brain Atlas</a>
-    &bull;
-    <a href="?ml=2.7&amp;ap=.43&amp;dv=5.4">CPu caudate putamen (striatum)</a>
-  </p>
+  {% include brain-atlas-toolbar.html species='rat' %}
 
   <hr>
 
@@ -72,10 +71,5 @@ permalink: /rat-brain-atlas/
     </div>
   </section>
 
-  <hr>
-
-  <footer class="atlas-footer">
-    <p><strong>Atlas Source:</strong> Paxinos, George, and Charles Watson. <em>The rat brain in stereotaxic coordinates: hard cover edition.</em> Access Online via Elsevier, 2006.</p>
-    <p>A tool by <a href="{{ '/' | relative_url }}">Matt Gaidica</a></p>
-  </footer>
+  {% include brain-atlas-footer.html %}
 </div>

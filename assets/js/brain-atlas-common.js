@@ -198,9 +198,191 @@
       });
   }
 
+  var citeStatusTimeoutId = null;
+
+  function initBrainAtlasFooter() {
+    var btn = document.getElementById("atlas-cite-btn");
+    var dataEl = document.getElementById("atlas-cite-json");
+    var statusEl = document.getElementById("atlas-cite-status");
+    if (!btn || !dataEl) return;
+
+    var data;
+    try {
+      data = JSON.parse(dataEl.textContent.trim());
+    } catch (e) {
+      return;
+    }
+
+    function formatDate() {
+      return new Date().toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    }
+
+    function buildCiteText() {
+      var url = typeof window !== "undefined" ? window.location.href : "";
+      return (
+        data.book +
+        "\n\n" +
+        data.toolTitle +
+        " (interactive atlas). Matt Gaidica. " +
+        url +
+        ". Accessed " +
+        formatDate() +
+        "."
+      );
+    }
+
+    function showStatus(msg, isError) {
+      if (!statusEl) return;
+      statusEl.textContent = msg;
+      statusEl.hidden = false;
+      if (isError) statusEl.classList.add("atlas-cite-status--error");
+      else statusEl.classList.remove("atlas-cite-status--error");
+      if (citeStatusTimeoutId !== null) {
+        window.clearTimeout(citeStatusTimeoutId);
+        citeStatusTimeoutId = null;
+      }
+      if (!isError && msg) {
+        citeStatusTimeoutId = window.setTimeout(function () {
+          citeStatusTimeoutId = null;
+          statusEl.hidden = true;
+          statusEl.textContent = "";
+        }, 3500);
+      }
+    }
+
+    function fallbackCopy(text) {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        if (document.execCommand("copy")) {
+          showStatus("Copied to clipboard.");
+        } else {
+          showStatus(
+            "Could not copy automatically. Copy the atlas source text above.",
+            true
+          );
+        }
+      } catch (err) {
+        showStatus(
+          "Could not copy automatically. Copy the atlas source text above.",
+          true
+        );
+      }
+      document.body.removeChild(ta);
+    }
+
+    btn.addEventListener("click", function () {
+      var text = buildCiteText();
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(
+          function () {
+            showStatus("Copied to clipboard.");
+          },
+          function () {
+            fallbackCopy(text);
+          }
+        );
+      } else {
+        fallbackCopy(text);
+      }
+    });
+  }
+
+  var LS_CROSSHAIR_OPACITY = "labs.brainAtlas.crosshairOpacity";
+  var LS_CROSSHAIR_SCALE = "labs.brainAtlas.crosshairScale";
+
+  function initCrosshairControls() {
+    var body = document.body;
+    if (!body || !body.classList.contains("lab-brain-atlas")) return;
+
+    var opIn = document.getElementById("atlas-crosshair-opacity");
+    var scIn = document.getElementById("atlas-crosshair-scale");
+    if (!opIn || !scIn) return;
+
+    var OP_MIN = 0;
+    var OP_MAX = 1;
+    var OP_DEFAULT = 1;
+    var SC_MIN = 0.65;
+    var SC_MAX = 1.45;
+    var SC_DEFAULT = 1;
+
+    function readNum(key, fallback) {
+      try {
+        var raw = localStorage.getItem(key);
+        if (raw === null || raw === "") return fallback;
+        var n = parseFloat(raw);
+        return Number.isFinite(n) ? n : fallback;
+      } catch (e) {
+        return fallback;
+      }
+    }
+
+    function writeNum(key, n) {
+      try {
+        localStorage.setItem(key, String(n));
+      } catch (e) {}
+    }
+
+    function clamp(n, lo, hi) {
+      return Math.min(hi, Math.max(lo, n));
+    }
+
+    function applyVars(opacity, scale) {
+      body.style.setProperty("--atlas-marker-opacity", String(opacity));
+      body.style.setProperty("--atlas-marker-scale", String(scale));
+    }
+
+    var opacity = clamp(readNum(LS_CROSSHAIR_OPACITY, OP_DEFAULT), OP_MIN, OP_MAX);
+    var scale = clamp(readNum(LS_CROSSHAIR_SCALE, SC_DEFAULT), SC_MIN, SC_MAX);
+
+    opIn.value = String(opacity);
+    scIn.value = String(scale);
+    applyVars(opacity, scale);
+
+    opIn.addEventListener("input", function () {
+      var o = parseFloat(opIn.value);
+      if (!Number.isFinite(o)) return;
+      o = clamp(o, OP_MIN, OP_MAX);
+      var s = parseFloat(scIn.value);
+      if (!Number.isFinite(s)) s = SC_DEFAULT;
+      applyVars(o, clamp(s, SC_MIN, SC_MAX));
+      writeNum(LS_CROSSHAIR_OPACITY, o);
+    });
+
+    scIn.addEventListener("input", function () {
+      var s = parseFloat(scIn.value);
+      if (!Number.isFinite(s)) return;
+      s = clamp(s, SC_MIN, SC_MAX);
+      var o = parseFloat(opIn.value);
+      if (!Number.isFinite(o)) o = OP_DEFAULT;
+      applyVars(clamp(o, OP_MIN, OP_MAX), s);
+      writeNum(LS_CROSSHAIR_SCALE, s);
+    });
+  }
+
   global.BrainAtlasCommon = {
     boot: boot,
     parseCsv: parseCsv,
     closestByType: closestByType,
   };
+
+  function initBrainAtlasUi() {
+    initCrosshairControls();
+    initBrainAtlasFooter();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initBrainAtlasUi);
+  } else {
+    initBrainAtlasUi();
+  }
 })(typeof window !== "undefined" ? window : this);

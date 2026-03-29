@@ -1,0 +1,40 @@
+{% if include.species == 'rat' %}
+  {% assign atlas_regions = site.data.rat_atlas_regions %}
+{% else %}
+  {% assign atlas_regions = site.data.mouse_atlas_regions %}
+{% endif %}
+
+<div class="atlas-toolbar">
+  <div class="atlas-toolbar__presets">
+    <label class="atlas-region-pick__label atlas-sr-only" for="atlas-region-select">Structure preset</label>
+    <div class="atlas-region-pick__control">
+      <select id="atlas-region-select" class="atlas-region-pick__select" autocomplete="off">
+        {% for r in atlas_regions %}
+        {% if r.ap == nil and r.ml == nil and r.dv == nil %}
+        <option value="">{{ r.label }}</option>
+        {% else %}
+        <option
+          value="p{{ forloop.index }}"
+          data-ap="{{ r.ap }}"
+          data-ml="{{ r.ml }}"
+          data-dv="{{ r.dv }}"
+          {% if r.notes %}title="{{ r.notes | xml_escape }}"{% endif %}
+        >{{ r.label }}</option>
+        {% endif %}
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <div class="atlas-crosshair" role="group" aria-labelledby="atlas-crosshair-legend">
+    <span id="atlas-crosshair-legend" class="atlas-crosshair__legend">Crosshair</span>
+    <div class="atlas-crosshair__control">
+      <label class="atlas-crosshair__mini-label" for="atlas-crosshair-opacity">Opacity</label>
+      <input type="range" id="atlas-crosshair-opacity" class="atlas-crosshair__range" min="0" max="1" step="0.05" value="1" aria-label="Crosshair opacity">
+    </div>
+    <div class="atlas-crosshair__control">
+      <label class="atlas-crosshair__mini-label" for="atlas-crosshair-scale">Size</label>
+      <input type="range" id="atlas-crosshair-scale" class="atlas-crosshair__range" min="0.65" max="1.45" step="0.05" value="1" aria-label="Crosshair size">
+    </div>
+  </div>
+</div>
