@@ -5,4 +5,9 @@ _site/
 vendor/
 .DS_Store
 
+# Raw plate exports must not be committed (only .atlasbin is published).
+rat-brain-atlas/images/**/*.[jJ][pP][gG]
+rat-brain-atlas/images/**/*.[jJ][pP][eE][gG]
+mouse-brain-atlas/images/**/*.[jJ][pP][gG]
+mouse-brain-atlas/images/**/*.[jJ][pP][eE][gG]
 

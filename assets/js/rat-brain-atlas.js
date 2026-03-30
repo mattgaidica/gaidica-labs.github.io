@@ -16,17 +16,17 @@
 
     return {
       coronal: {
-        imageUrl: "images/Rat_Brain_Atlas_" + cor.index + ".jpg",
+        imageUrl: "images/Rat_Brain_Atlas_" + cor.index + ".atlasbin",
         left: cor.x0 + ml * cor.pxx,
         top: cor.y0 + dv * cor.pxy,
       },
       sagittal: {
-        imageUrl: "images/Rat_Brain_Atlas_" + sag.index + ".jpg",
+        imageUrl: "images/Rat_Brain_Atlas_" + sag.index + ".atlasbin",
         left: sag.x0 + -ap * sag.pxx,
         top: sag.y0 + dv * sag.pxy,
       },
       horizontal: {
-        imageUrl: "images/Rat_Brain_Atlas_" + hor.index + ".jpg",
+        imageUrl: "images/Rat_Brain_Atlas_" + hor.index + ".atlasbin",
         left: hor.x0 + -ap * hor.pxx,
         top: hor.y0 + -ml * hor.pxy,
       },

@@ -1,6 +1,46 @@
 (function (global) {
   "use strict";
 
+  /** Must match the first line of scripts/atlas_xor_key.hex (32-byte key as 64 hex chars). */
+  var ATLAS_IMAGE_XOR_KEY_HEX =
+    "6b1e9f3a8c2d4057e8a1f4c9d2b6e305a7f8c1d4e9b2a60853f7e1c9d4a2b6e8";
+
+  function atlasHexToBytes(hex) {
+    var len = hex.length / 2;
+    var out = new Uint8Array(len);
+    for (var i = 0; i < len; i++) {
+      out[i] = parseInt(hex.substr(i * 2, 2), 16);
+    }
+    return out;
+  }
+
+  var atlasXorKeyBytes = atlasHexToBytes(ATLAS_IMAGE_XOR_KEY_HEX);
+
+  function atlasUrlIsObfuscated(url) {
+    var s = String(url).toLowerCase();
+    return s.endsWith(".atlasbin");
+  }
+
+  function atlasXorDecodeBuffer(buffer) {
+    var inp = new Uint8Array(buffer);
+    var out = new Uint8Array(inp.length);
+    var kl = atlasXorKeyBytes.length;
+    for (var i = 0; i < inp.length; i++) {
+      out[i] = inp[i] ^ atlasXorKeyBytes[i % kl];
+    }
+    return out.buffer.slice(out.byteOffset, out.byteOffset + out.byteLength);
+  }
+
+  function revokeAtlasBlobUrl(img) {
+    var prev = img.getAttribute("data-atlas-blob-url");
+    if (prev) {
+      try {
+        URL.revokeObjectURL(prev);
+      } catch (err) {}
+      img.removeAttribute("data-atlas-blob-url");
+    }
+  }
+
   function parseCsv(text) {
     var lines = text.trim().split(/\r?\n/);
     var rows = [];
@@ -58,11 +98,50 @@
   function applyPanel(prefix, data) {
     var img = document.getElementById(prefix + "-img");
     var dot = document.getElementById(prefix + "-dot");
-    if (!img || !dot) return;
+    if (!img || !dot) return Promise.resolve();
 
-    img.src = data.imageUrl;
-    img.alt = prefix + " section";
-    layoutDot(img, dot, data.left, data.top);
+    var leftPx = data.left;
+    var topPx = data.top;
+
+    if (!atlasUrlIsObfuscated(data.imageUrl)) {
+      revokeAtlasBlobUrl(img);
+      img.src = data.imageUrl;
+      img.alt = prefix + " section";
+      layoutDot(img, dot, leftPx, topPx);
+      return Promise.resolve();
+    }
+
+    revokeAtlasBlobUrl(img);
+
+    return fetch(data.imageUrl, { credentials: "same-origin" })
+      .then(function (r) {
+        if (!r.ok) throw new Error("Failed to load image: " + data.imageUrl);
+        return r.arrayBuffer();
+      })
+      .then(function (buf) {
+        var decoded = atlasXorDecodeBuffer(buf);
+        var blob = new Blob([decoded]);
+        var objUrl = URL.createObjectURL(blob);
+        img.setAttribute("data-atlas-blob-url", objUrl);
+        img.onload = function () {
+          img.onload = null;
+        };
+        img.onerror = function () {
+          img.onerror = null;
+          try {
+            URL.revokeObjectURL(objUrl);
+          } catch (e2) {}
+          img.removeAttribute("data-atlas-blob-url");
+        };
+        img.src = objUrl;
+        img.alt = prefix + " section";
+        layoutDot(img, dot, leftPx, topPx);
+      })
+      .catch(function (err) {
+        console.error(err);
+        img.alt = "Section image failed to load";
+        img.removeAttribute("src");
+      });
   }
 
   var FLOAT_RE = /^[+-]?(?:\d+\.\d*|\.\d+|\d+)(?:[eE][+-]?\d+)?$/;
@@ -186,18 +265,26 @@
 
   function renderAtlasView(rows, config, ap, ml, dv) {
     var atlas = config.getAtlas(ap, ml, dv, rows);
+    var tasks = [];
     for (var i = 0; i < config.panels.length; i++) {
-      var key = config.panels[i];
-      applyPanel(key, atlas[key]);
+      var panelKey = config.panels[i];
+      tasks.push(
+        applyPanel(panelKey, atlas[panelKey]).catch(function (e) {
+          console.error(e);
+        })
+      );
     }
+    return Promise.all(tasks);
   }
 
   function redrawAtlasFromInputs() {
     if (!lastRows || !lastConfig) return;
     var nums = readInputsAsNumbers();
     if (!nums) return;
-    renderAtlasView(lastRows, lastConfig, nums.ap, nums.ml, nums.dv);
     updateSliceNavButtonStates();
+    renderAtlasView(lastRows, lastConfig, nums.ap, nums.ml, nums.dv).catch(function (e) {
+      console.error(e);
+    });
   }
 
   function replaceUrlFromInputs() {
@@ -371,10 +458,13 @@
         if (config.queryTitle !== false) applyQueryTitle(params);
 
         var nums = readInputsAsNumbers();
+        var chain = Promise.resolve();
         if (nums) {
-          renderAtlasView(lastRows, lastConfig, nums.ap, nums.ml, nums.dv);
+          chain = renderAtlasView(lastRows, lastConfig, nums.ap, nums.ml, nums.dv);
         }
-
+        return chain;
+      })
+      .then(function () {
         initSliceNavigation();
         updateSliceNavButtonStates();
       })

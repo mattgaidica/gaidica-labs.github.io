@@ -16,12 +16,12 @@
 
     return {
       coronal: {
-        imageUrl: "images/Mouse_Brain_Atlas_" + cor.index + ".jpg",
+        imageUrl: "images/Mouse_Brain_Atlas_" + cor.index + ".atlasbin",
         left: cor.x0 - ml * cor.pxx,
         top: cor.y0 + dv * cor.pxy,
       },
       sagittal: {
-        imageUrl: "images/Mouse_Brain_Atlas_" + sag.index + ".jpg",
+        imageUrl: "images/Mouse_Brain_Atlas_" + sag.index + ".atlasbin",
         left: sag.x0 + -ap * sag.pxx,
         top: sag.y0 + dv * sag.pxy,
       },
