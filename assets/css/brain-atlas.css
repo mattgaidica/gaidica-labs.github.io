@@ -21,6 +21,7 @@
   --atlas-fixed-footer-space: 2.85rem;
   --atlas-marker-opacity: 1;
   --atlas-marker-scale: 1;
+  --atlas-marker-line-width: 2;
   margin: 0;
   padding: 0 1rem calc(var(--atlas-fixed-footer-space) + env(safe-area-inset-bottom, 0px));
   font-family: "Raleway", system-ui, sans-serif;
@@ -313,6 +314,19 @@
   .lab-brain-atlas .atlas-crosshair__range {
     width: 6.5rem;
   }
+
+  .lab-brain-atlas .atlas-marker-tools {
+    justify-content: flex-start;
+    gap: 0.5rem 1rem;
+  }
+
+  .lab-brain-atlas .atlas-marker-tools__range {
+    width: 6.5rem;
+  }
+
+  .lab-brain-atlas .atlas-marker-tools__range--wide {
+    width: 7.5rem;
+  }
 }
 
 .lab-brain-atlas .atlas-form-error {
@@ -392,6 +406,159 @@
   margin: 0;
   accent-color: var(--atlas-accent);
   cursor: pointer;
+}
+
+/* Rat: marker mode (crosshair vs electrode line) */
+.lab-brain-atlas .atlas-marker-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem 0.85rem;
+  padding: 0.15rem 0;
+}
+
+.lab-brain-atlas .atlas-marker-tools__legend {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #9a9a9a;
+  margin-right: 0.15rem;
+}
+
+.lab-brain-atlas .atlas-marker-mode {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 999px;
+  overflow: hidden;
+  background: #eef2f0;
+}
+
+.lab-brain-atlas .atlas-marker-mode__option {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  cursor: pointer;
+}
+
+.lab-brain-atlas .atlas-marker-mode__option input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.lab-brain-atlas .atlas-marker-mode__option span {
+  display: block;
+  padding: 0.28rem 0.55rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #7a7a7a;
+  line-height: 1.2;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.lab-brain-atlas .atlas-marker-mode__option input:checked + span {
+  background: #fff;
+  color: var(--atlas-accent);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.lab-brain-atlas .atlas-marker-mode__option input:focus-visible + span {
+  outline: 2px solid var(--atlas-accent);
+  outline-offset: -2px;
+}
+
+.lab-brain-atlas .atlas-marker-tools__control {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.lab-brain-atlas .atlas-marker-tools__mini-label {
+  font-size: 0.68rem;
+  color: #9a9a9a;
+  white-space: nowrap;
+}
+
+.lab-brain-atlas .atlas-marker-tools__range {
+  width: 4.75rem;
+  height: 0.35rem;
+  margin: 0;
+  accent-color: var(--atlas-accent);
+  cursor: pointer;
+}
+
+.lab-brain-atlas .atlas-marker-tools__range--wide {
+  width: 5.75rem;
+}
+
+.lab-brain-atlas .atlas-marker-tools__line-readout,
+.lab-brain-atlas .atlas-marker-tools__entry-ml {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #6f8f82;
+  white-space: nowrap;
+}
+
+.lab-brain-atlas .atlas-marker-tools__angle-value {
+  min-width: 2rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--atlas-accent);
+  text-align: right;
+}
+
+.lab-brain-atlas .atlas-electrode-svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+  display: none;
+}
+
+.lab-brain-atlas.lab-brain-atlas--marker-line .atlas-electrode-svg {
+  display: block;
+}
+
+.lab-brain-atlas .atlas-electrode-line {
+  stroke: var(--atlas-marker-line);
+  stroke-width: var(--atlas-marker-line-width);
+  stroke-linecap: round;
+  paint-order: stroke;
+  filter: drop-shadow(0 0 1px var(--atlas-marker-halo)) drop-shadow(0 0 2px rgba(0, 0, 0, 0.2));
+}
+
+.lab-brain-atlas.lab-brain-atlas--marker-line #coronal-dot::before,
+.lab-brain-atlas.lab-brain-atlas--marker-line #coronal-dot::after,
+.lab-brain-atlas.lab-brain-atlas--marker-line #sagittal-dot::before,
+.lab-brain-atlas.lab-brain-atlas--marker-line #sagittal-dot::after,
+.lab-brain-atlas.lab-brain-atlas--marker-line #horizontal-dot::before,
+.lab-brain-atlas.lab-brain-atlas--marker-line #horizontal-dot::after {
+  display: none;
+}
+
+.lab-brain-atlas.lab-brain-atlas--marker-line #coronal-dot,
+.lab-brain-atlas.lab-brain-atlas--marker-line #sagittal-dot,
+.lab-brain-atlas.lab-brain-atlas--marker-line #horizontal-dot {
+  width: 9px;
+  height: 9px;
+  background: radial-gradient(
+    circle at center,
+    var(--atlas-marker-center) 0 3px,
+    transparent 3px
+  );
 }
 
 .lab-brain-atlas .atlas-region-pick__control {
@@ -886,6 +1053,13 @@
   .lab-brain-atlas .atlas-marker,
   .lab-brain-atlas .atlas-marker::before,
   .lab-brain-atlas .atlas-marker::after {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .lab-brain-atlas .atlas-electrode-line {
+    opacity: 1 !important;
+    stroke-width: 2 !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }

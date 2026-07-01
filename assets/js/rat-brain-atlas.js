@@ -19,16 +19,31 @@
         imageUrl: "images/Rat_Brain_Atlas_" + cor.index + ".atlasbin",
         left: cor.x0 + ml * cor.pxx,
         top: cor.y0 + dv * cor.pxy,
+        plane: "coronal",
+        cal: { x0: cor.x0, y0: cor.y0, pxx: cor.pxx, pxy: cor.pxy },
+        targetAp: ap,
+        targetMl: ml,
+        targetDv: dv,
       },
       sagittal: {
         imageUrl: "images/Rat_Brain_Atlas_" + sag.index + ".atlasbin",
         left: sag.x0 + -ap * sag.pxx,
         top: sag.y0 + dv * sag.pxy,
+        plane: "sagittal",
+        cal: { x0: sag.x0, y0: sag.y0, pxx: sag.pxx, pxy: sag.pxy },
+        targetAp: ap,
+        targetMl: ml,
+        targetDv: dv,
       },
       horizontal: {
         imageUrl: "images/Rat_Brain_Atlas_" + hor.index + ".atlasbin",
         left: hor.x0 + -ap * hor.pxx,
         top: hor.y0 + -ml * hor.pxy,
+        plane: "horizontal",
+        cal: { x0: hor.x0, y0: hor.y0, pxx: hor.pxx, pxy: hor.pxy },
+        targetAp: ap,
+        targetMl: ml,
+        targetDv: dv,
       },
     };
   }
@@ -38,6 +53,7 @@
     getAtlas: getAtlas,
     panels: ["coronal", "sagittal", "horizontal"],
     queryTitle: true,
+    electrodeLine: true,
   });
 
   function initRatRegionPresets() {

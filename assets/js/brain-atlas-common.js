@@ -95,19 +95,184 @@
     else img.addEventListener("load", apply, { once: true });
   }
 
+  var LS_MARKER_MODE = "labs.brainAtlas.markerMode";
+  var LS_ENTRY_ANGLE = "labs.brainAtlas.entryAngle";
+  var lastAtlasPayload = null;
+  var markerModeState = "crosshair";
+  var entryAngleDeg = 0;
+
+  function degToRad(deg) {
+    return (deg * Math.PI) / 180;
+  }
+
+  function computeElectrodeEntryMl(ml, dv, angleDeg) {
+    var d = Math.abs(dv);
+    return ml - d * Math.tan(degToRad(angleDeg));
+  }
+
+  function formatMlReadout(n) {
+    if (!Number.isFinite(n)) return "—";
+    var s = n.toFixed(3).replace(/\.?0+$/, "");
+    return s === "-0" ? "0" : s;
+  }
+
+  function isElectrodeLineActive() {
+    return lastConfig && lastConfig.electrodeLine && markerModeState === "line";
+  }
+
+  function applyMarkerModeBodyClass() {
+    var body = document.body;
+    if (!body) return;
+    if (isElectrodeLineActive()) {
+      body.classList.add("lab-brain-atlas--marker-line");
+    } else {
+      body.classList.remove("lab-brain-atlas--marker-line");
+    }
+  }
+
+  function updateLineReadout(angleDeg, mlEntry) {
+    var el = document.getElementById("atlas-line-readout");
+    var angleEl = document.getElementById("atlas-entry-angle-value");
+    var angleInt = Math.round(angleDeg);
+    if (angleEl) angleEl.textContent = angleInt + "°";
+    if (el) {
+      el.textContent =
+        angleInt + "° · Entry ML at DV=0: " + formatMlReadout(mlEntry) + " mm";
+    }
+  }
+
+  function extendLineToTop(xEntry, yEntry, xTarget, yTarget) {
+    var x1 = xEntry;
+    var y1 = yEntry;
+    var dx = xTarget - xEntry;
+    var dy = yTarget - yEntry;
+    if (Math.abs(dy) > 1e-6) {
+      var tSkull = -yEntry / dy;
+      if (tSkull < 0) {
+        x1 = xEntry + tSkull * dx;
+        y1 = 0;
+      }
+    }
+    return { x1: x1, y1: y1, x2: xTarget, y2: yTarget };
+  }
+
+  function electrodeLineEndpoints(plane, cal, ml, ap, dv, angleDeg) {
+    var d = Math.abs(dv);
+    var mlEntry = computeElectrodeEntryMl(ml, dv, angleDeg);
+
+    if (plane === "coronal") {
+      var xEntry = cal.x0 + mlEntry * cal.pxx;
+      var yEntry = cal.y0;
+      var xTarget = cal.x0 + ml * cal.pxx;
+      var yTarget = cal.y0 + d * cal.pxy;
+      return extendLineToTop(xEntry, yEntry, xTarget, yTarget);
+    }
+
+    if (plane === "sagittal") {
+      var xSag = cal.x0 - ap * cal.pxx;
+      var yEntrySag = cal.y0;
+      var yTargetSag = cal.y0 + d * cal.pxy;
+      return extendLineToTop(xSag, yEntrySag, xSag, yTargetSag);
+    }
+
+    if (plane === "horizontal") {
+      var xHor = cal.x0 - ap * cal.pxx;
+      var yEntryHor = cal.y0 - mlEntry * cal.pxy;
+      var yTargetHor = cal.y0 - ml * cal.pxy;
+      return { x1: xHor, y1: yEntryHor, x2: xHor, y2: yTargetHor };
+    }
+
+    return null;
+  }
+
+  function layoutElectrodeLine(img, svg, lineEl, data, angleDeg) {
+    function apply() {
+      var nw = img.naturalWidth;
+      var nh = img.naturalHeight;
+      if (!nw || !nh || !lineEl || !data.plane || !data.cal) return;
+
+      svg.setAttribute("viewBox", "0 0 " + nw + " " + nh);
+      svg.setAttribute("width", "100%");
+      svg.setAttribute("height", "100%");
+
+      var ends = electrodeLineEndpoints(
+        data.plane,
+        data.cal,
+        data.targetMl,
+        data.targetAp,
+        data.targetDv,
+        angleDeg
+      );
+      if (!ends) return;
+
+      lineEl.setAttribute("x1", String(ends.x1));
+      lineEl.setAttribute("y1", String(ends.y1));
+      lineEl.setAttribute("x2", String(ends.x2));
+      lineEl.setAttribute("y2", String(ends.y2));
+
+      if (data.plane === "coronal") {
+        var mlEntry = computeElectrodeEntryMl(data.targetMl, data.targetDv, angleDeg);
+        updateLineReadout(angleDeg, mlEntry);
+      }
+    }
+
+    if (img.complete && img.naturalWidth) apply();
+    else img.addEventListener("load", apply, { once: true });
+  }
+
+  function layoutPanelMarkers(prefix, data) {
+    var img = document.getElementById(prefix + "-img");
+    var dot = document.getElementById(prefix + "-dot");
+    if (!img || !dot) return;
+
+    var leftPx = data.left;
+    var topPx = data.top;
+
+    if (isElectrodeLineActive() && data.plane && data.cal) {
+      var svg = document.getElementById(prefix + "-electrode-svg");
+      var lineEl = document.getElementById(prefix + "-electrode-line");
+      if (svg && lineEl) {
+        layoutDot(img, dot, leftPx, topPx);
+        layoutElectrodeLine(img, svg, lineEl, data, entryAngleDeg);
+        return;
+      }
+    }
+
+    layoutDot(img, dot, leftPx, topPx);
+  }
+
+  function refreshLineReadoutFromPayload() {
+    if (!isElectrodeLineActive() || !lastAtlasPayload) return;
+    var cor = lastAtlasPayload.atlas.coronal;
+    if (!cor || cor.targetMl === undefined) return;
+    var mlEntry = computeElectrodeEntryMl(cor.targetMl, cor.targetDv, entryAngleDeg);
+    updateLineReadout(entryAngleDeg, mlEntry);
+  }
+
+  function relayoutMarkers() {
+    if (!lastAtlasPayload || !lastConfig) return;
+    applyMarkerModeBodyClass();
+    var atlas = lastAtlasPayload.atlas;
+    for (var i = 0; i < lastConfig.panels.length; i++) {
+      var key = lastConfig.panels[i];
+      if (atlas[key]) layoutPanelMarkers(key, atlas[key]);
+    }
+  }
+
+  function finishPanelImageLoad(prefix, data) {
+    layoutPanelMarkers(prefix, data);
+  }
+
   function applyPanel(prefix, data) {
     var img = document.getElementById(prefix + "-img");
     var dot = document.getElementById(prefix + "-dot");
     if (!img || !dot) return Promise.resolve();
 
-    var leftPx = data.left;
-    var topPx = data.top;
-
     if (!atlasUrlIsObfuscated(data.imageUrl)) {
       revokeAtlasBlobUrl(img);
       img.src = data.imageUrl;
       img.alt = prefix + " section";
-      layoutDot(img, dot, leftPx, topPx);
+      finishPanelImageLoad(prefix, data);
       return Promise.resolve();
     }
 
@@ -135,7 +300,7 @@
         };
         img.src = objUrl;
         img.alt = prefix + " section";
-        layoutDot(img, dot, leftPx, topPx);
+        finishPanelImageLoad(prefix, data);
       })
       .catch(function (err) {
         console.error(err);
@@ -265,6 +430,7 @@
 
   function renderAtlasView(rows, config, ap, ml, dv) {
     var atlas = config.getAtlas(ap, ml, dv, rows);
+    lastAtlasPayload = { ap: ap, ml: ml, dv: dv, atlas: atlas };
     var tasks = [];
     for (var i = 0; i < config.panels.length; i++) {
       var panelKey = config.panels[i];
@@ -465,6 +631,7 @@
         return chain;
       })
       .then(function () {
+        applyMarkerModeBodyClass();
         initSliceNavigation();
         updateSliceNavButtonStates();
       })
@@ -577,75 +744,115 @@
     });
   }
 
-  var LS_CROSSHAIR_OPACITY = "labs.brainAtlas.crosshairOpacity";
   var LS_CROSSHAIR_SCALE = "labs.brainAtlas.crosshairScale";
+
+  function readStoredNum(key, fallback) {
+    try {
+      var raw = localStorage.getItem(key);
+      if (raw === null || raw === "") return fallback;
+      var n = parseFloat(raw);
+      return Number.isFinite(n) ? n : fallback;
+    } catch (e) {
+      return fallback;
+    }
+  }
+
+  function writeStoredNum(key, n) {
+    try {
+      localStorage.setItem(key, String(n));
+    } catch (e) {}
+  }
+
+  function clampNum(n, lo, hi) {
+    return Math.min(hi, Math.max(lo, n));
+  }
+
+  function applyMarkerStyleVars(scale) {
+    var body = document.body;
+    if (!body) return;
+    body.style.setProperty("--atlas-marker-scale", String(scale));
+    body.style.setProperty("--atlas-marker-line-width", String(2 * scale));
+  }
+
+  function initMarkerModeControls() {
+    var modeRadios = document.querySelectorAll('input[name="atlas-marker-mode"]');
+    if (!modeRadios.length) return;
+
+    var crosshairOnly = document.querySelector(".atlas-marker-tools__crosshair-only");
+    var lineOnly = document.querySelector(".atlas-marker-tools__line-only");
+    var angleIn = document.getElementById("atlas-entry-angle");
+
+    markerModeState = "crosshair";
+    try {
+      var storedMode = localStorage.getItem(LS_MARKER_MODE);
+      if (storedMode === "line" || storedMode === "crosshair") markerModeState = storedMode;
+    } catch (e) {}
+
+    entryAngleDeg = Math.round(clampNum(readStoredNum(LS_ENTRY_ANGLE, 0), -45, 45));
+
+    for (var i = 0; i < modeRadios.length; i++) {
+      var r = modeRadios[i];
+      r.checked = r.value === markerModeState;
+    }
+    if (angleIn) angleIn.value = String(entryAngleDeg);
+    refreshLineReadoutFromPayload();
+
+    function syncModeUi() {
+      var isLine = markerModeState === "line";
+      if (crosshairOnly) crosshairOnly.hidden = isLine;
+      if (lineOnly) lineOnly.hidden = !isLine;
+      applyMarkerModeBodyClass();
+      if (isLine) refreshLineReadoutFromPayload();
+      relayoutMarkers();
+    }
+
+    for (var j = 0; j < modeRadios.length; j++) {
+      modeRadios[j].addEventListener("change", function () {
+        if (!this.checked) return;
+        markerModeState = this.value === "line" ? "line" : "crosshair";
+        try {
+          localStorage.setItem(LS_MARKER_MODE, markerModeState);
+        } catch (e) {}
+        syncModeUi();
+      });
+    }
+
+    if (angleIn) {
+      angleIn.addEventListener("input", function () {
+        var a = parseFloat(angleIn.value);
+        if (!Number.isFinite(a)) return;
+        entryAngleDeg = Math.round(clampNum(a, -45, 45));
+        angleIn.value = String(entryAngleDeg);
+        writeStoredNum(LS_ENTRY_ANGLE, entryAngleDeg);
+        relayoutMarkers();
+      });
+    }
+
+    syncModeUi();
+  }
 
   function initCrosshairControls() {
     var body = document.body;
     if (!body || !body.classList.contains("lab-brain-atlas")) return;
 
-    var opIn = document.getElementById("atlas-crosshair-opacity");
     var scIn = document.getElementById("atlas-crosshair-scale");
-    if (!opIn || !scIn) return;
+    if (!scIn) return;
 
-    var OP_MIN = 0;
-    var OP_MAX = 1;
-    var OP_DEFAULT = 1;
     var SC_MIN = 0.65;
     var SC_MAX = 1.45;
     var SC_DEFAULT = 1;
 
-    function readNum(key, fallback) {
-      try {
-        var raw = localStorage.getItem(key);
-        if (raw === null || raw === "") return fallback;
-        var n = parseFloat(raw);
-        return Number.isFinite(n) ? n : fallback;
-      } catch (e) {
-        return fallback;
-      }
-    }
+    var scale = clampNum(readStoredNum(LS_CROSSHAIR_SCALE, SC_DEFAULT), SC_MIN, SC_MAX);
 
-    function writeNum(key, n) {
-      try {
-        localStorage.setItem(key, String(n));
-      } catch (e) {}
-    }
-
-    function clamp(n, lo, hi) {
-      return Math.min(hi, Math.max(lo, n));
-    }
-
-    function applyVars(opacity, scale) {
-      body.style.setProperty("--atlas-marker-opacity", String(opacity));
-      body.style.setProperty("--atlas-marker-scale", String(scale));
-    }
-
-    var opacity = clamp(readNum(LS_CROSSHAIR_OPACITY, OP_DEFAULT), OP_MIN, OP_MAX);
-    var scale = clamp(readNum(LS_CROSSHAIR_SCALE, SC_DEFAULT), SC_MIN, SC_MAX);
-
-    opIn.value = String(opacity);
     scIn.value = String(scale);
-    applyVars(opacity, scale);
-
-    opIn.addEventListener("input", function () {
-      var o = parseFloat(opIn.value);
-      if (!Number.isFinite(o)) return;
-      o = clamp(o, OP_MIN, OP_MAX);
-      var s = parseFloat(scIn.value);
-      if (!Number.isFinite(s)) s = SC_DEFAULT;
-      applyVars(o, clamp(s, SC_MIN, SC_MAX));
-      writeNum(LS_CROSSHAIR_OPACITY, o);
-    });
+    applyMarkerStyleVars(scale);
 
     scIn.addEventListener("input", function () {
       var s = parseFloat(scIn.value);
       if (!Number.isFinite(s)) return;
-      s = clamp(s, SC_MIN, SC_MAX);
-      var o = parseFloat(opIn.value);
-      if (!Number.isFinite(o)) o = OP_DEFAULT;
-      applyVars(clamp(o, OP_MIN, OP_MAX), s);
-      writeNum(LS_CROSSHAIR_SCALE, s);
+      s = clampNum(s, SC_MIN, SC_MAX);
+      applyMarkerStyleVars(s);
+      writeStoredNum(LS_CROSSHAIR_SCALE, s);
     });
   }
 
@@ -661,6 +868,7 @@
 
   function initBrainAtlasUi() {
     initCrosshairControls();
+    initMarkerModeControls();
     initBrainAtlasFooter();
   }
 
