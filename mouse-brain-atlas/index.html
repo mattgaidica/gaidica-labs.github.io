@@ -12,39 +12,13 @@ atlas_source_md: |
 atlas_cite_book: "Paxinos, George, and Keith B.J. Franklin. The mouse brain in stereotaxic coordinates: hard cover edition. Access Online via Elsevier, 2001."
 ---
 
-{% include brain-atlas-share.html %}
+{% include brain-atlas-copy.html %}
 <div class="atlas-inner">
   {% include brain-atlas-header.html %}
   <p id="atlas-query-title" class="atlas-subtitle" hidden></p>
   <p id="atlas-error" class="atlas-subtitle" style="color: #c1121f" hidden></p>
 
-  <form id="atlas-coord-form" class="atlas-form-row" method="get" action="" novalidate>
-    <div class="field">
-      <div class="input-wrap">
-        <span>ML</span>
-        <input id="input-ml" name="ml" type="text" inputmode="decimal" autocomplete="off" value="0" aria-label="ML (mm)">
-        <span class="suffix">mm</span>
-      </div>
-    </div>
-    <div class="field">
-      <div class="input-wrap">
-        <span>AP</span>
-        <input id="input-ap" name="ap" type="text" inputmode="decimal" autocomplete="off" value="0" aria-label="AP (mm)">
-        <span class="suffix">mm</span>
-      </div>
-    </div>
-    <div class="field">
-      <div class="input-wrap">
-        <span>DV</span>
-        <input id="input-dv" name="dv" type="text" inputmode="decimal" autocomplete="off" value="0" aria-label="DV (mm)">
-        <span class="suffix">mm</span>
-      </div>
-    </div>
-    <button type="submit">Submit</button>
-  </form>
-  <p id="atlas-form-error" class="atlas-form-error" role="alert" hidden></p>
-
-  {% include brain-atlas-toolbar.html species='mouse' %}
+  {% include brain-atlas-coord-input.html species='mouse' %}
 
   <hr>
 
@@ -54,7 +28,9 @@ atlas_cite_book: "Paxinos, George, and Keith B.J. Franklin. The mouse brain in s
       {% include brain-atlas-slice-nav.html plane='coronal' %}
     </h2>
     <div class="figure">
-      <div id="coronal-dot" class="atlas-marker" aria-hidden="true"></div>
+      <svg class="atlas-overlay-svg" id="coronal-overlay-svg" data-plane="coronal" aria-hidden="true" focusable="false">
+        <g class="atlas-targets"></g>
+      </svg>
       <img id="coronal-img" src="" alt="Coronal section">
     </div>
   </section>
@@ -65,7 +41,9 @@ atlas_cite_book: "Paxinos, George, and Keith B.J. Franklin. The mouse brain in s
       {% include brain-atlas-slice-nav.html plane='sagittal' %}
     </h2>
     <div class="figure">
-      <div id="sagittal-dot" class="atlas-marker" aria-hidden="true"></div>
+      <svg class="atlas-overlay-svg" id="sagittal-overlay-svg" data-plane="sagittal" aria-hidden="true" focusable="false">
+        <g class="atlas-targets"></g>
+      </svg>
       <img id="sagittal-img" src="" alt="Sagittal section">
     </div>
   </section>

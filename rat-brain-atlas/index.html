@@ -12,89 +12,64 @@ atlas_source_md: |
 atlas_cite_book: "Paxinos, George, and Charles Watson. The rat brain in stereotaxic coordinates: hard cover edition. Access Online via Elsevier, 2006."
 ---
 
-{% include brain-atlas-share.html %}
+{% include brain-atlas-copy.html %}
 <div class="atlas-inner">
   {% include brain-atlas-header.html %}
   <p id="atlas-query-title" class="atlas-subtitle" hidden></p>
   <p id="atlas-error" class="atlas-subtitle" style="color: #c1121f" hidden></p>
 
-  <form id="atlas-coord-form" class="atlas-form-row" method="get" action="" novalidate>
-    <div class="field">
-      <div class="input-wrap">
-        <span>ML</span>
-        <input id="input-ml" name="ml" type="text" inputmode="decimal" autocomplete="off" value="0" aria-label="ML (mm)">
-        <span class="suffix">mm</span>
-      </div>
-    </div>
-    <div class="field">
-      <div class="input-wrap">
-        <span>AP</span>
-        <input id="input-ap" name="ap" type="text" inputmode="decimal" autocomplete="off" value="0" aria-label="AP (mm)">
-        <span class="suffix">mm</span>
-      </div>
-    </div>
-    <div class="field">
-      <div class="input-wrap">
-        <span>DV</span>
-        <input id="input-dv" name="dv" type="text" inputmode="decimal" autocomplete="off" value="0" aria-label="DV (mm)">
-        <span class="suffix">mm</span>
-      </div>
-    </div>
-    <button type="submit">Submit</button>
-  </form>
-  <p id="atlas-form-error" class="atlas-form-error" role="alert" hidden></p>
-
-  {% include brain-atlas-toolbar.html species='rat' %}
+  {% include brain-atlas-coord-input.html multi=true %}
 
   <hr>
 
-  <section class="atlas-panel page-break">
-    <div class="atlas-panel__header">
-      <h2 class="atlas-panel__title">
-        <span class="atlas-panel__title-text">Coronal</span>
-        {% include brain-atlas-slice-nav.html plane='coronal' %}
-      </h2>
-      {% include brain-atlas-panel-angle.html direction='ml' %}
-    </div>
-    <div class="figure">
-      <svg class="atlas-electrode-svg" id="coronal-electrode-svg" aria-hidden="true" focusable="false">
-        <line class="atlas-electrode-line" id="coronal-electrode-line" />
-      </svg>
-      <div id="coronal-dot" class="atlas-marker" aria-hidden="true"></div>
-      <img id="coronal-img" src="" alt="Coronal section">
-    </div>
-  </section>
+  <div id="atlas-panels-single">
+    <section class="atlas-panel page-break">
+      <div class="atlas-panel__header">
+        <h2 class="atlas-panel__title">
+          <span class="atlas-panel__title-text">Coronal</span>
+          {% include brain-atlas-slice-nav.html plane='coronal' %}
+        </h2>
+        {% include brain-atlas-panel-angle.html direction='ml' %}
+      </div>
+      <div class="figure">
+        <svg class="atlas-overlay-svg" id="coronal-overlay-svg" data-plane="coronal" aria-hidden="true" focusable="false">
+          <g class="atlas-targets"></g>
+        </svg>
+        <img id="coronal-img" src="" alt="Coronal section">
+      </div>
+    </section>
 
-  <section class="atlas-panel page-break">
-    <div class="atlas-panel__header">
-      <h2 class="atlas-panel__title">
-        <span class="atlas-panel__title-text">Sagittal</span>
-        {% include brain-atlas-slice-nav.html plane='sagittal' %}
-      </h2>
-      {% include brain-atlas-panel-angle.html direction='ap' %}
-    </div>
-    <div class="figure">
-      <svg class="atlas-electrode-svg" id="sagittal-electrode-svg" aria-hidden="true" focusable="false">
-        <line class="atlas-electrode-line" id="sagittal-electrode-line" />
-      </svg>
-      <div id="sagittal-dot" class="atlas-marker" aria-hidden="true"></div>
-      <img id="sagittal-img" src="" alt="Sagittal section">
-    </div>
-  </section>
+    <section class="atlas-panel page-break">
+      <div class="atlas-panel__header">
+        <h2 class="atlas-panel__title">
+          <span class="atlas-panel__title-text">Sagittal</span>
+          {% include brain-atlas-slice-nav.html plane='sagittal' %}
+        </h2>
+        {% include brain-atlas-panel-angle.html direction='ap' %}
+      </div>
+      <div class="figure">
+        <svg class="atlas-overlay-svg" id="sagittal-overlay-svg" data-plane="sagittal" aria-hidden="true" focusable="false">
+          <g class="atlas-targets"></g>
+        </svg>
+        <img id="sagittal-img" src="" alt="Sagittal section">
+      </div>
+    </section>
 
-  <section class="atlas-panel">
-    <h2 class="atlas-panel__title">
-      <span class="atlas-panel__title-text">Horizontal</span>
-      {% include brain-atlas-slice-nav.html plane='horizontal' %}
-    </h2>
-    <div class="figure">
-      <svg class="atlas-electrode-svg" id="horizontal-electrode-svg" aria-hidden="true" focusable="false">
-        <line class="atlas-electrode-line" id="horizontal-electrode-line" />
-      </svg>
-      <div id="horizontal-dot" class="atlas-marker" aria-hidden="true"></div>
-      <img id="horizontal-img" src="" alt="Horizontal section">
-    </div>
-  </section>
+    <section class="atlas-panel">
+      <h2 class="atlas-panel__title">
+        <span class="atlas-panel__title-text">Horizontal</span>
+        {% include brain-atlas-slice-nav.html plane='horizontal' %}
+      </h2>
+      <div class="figure">
+        <svg class="atlas-overlay-svg" id="horizontal-overlay-svg" data-plane="horizontal" aria-hidden="true" focusable="false">
+          <g class="atlas-targets"></g>
+        </svg>
+        <img id="horizontal-img" src="" alt="Horizontal section">
+      </div>
+    </section>
+  </div>
+
+  <div id="atlas-panels-multi" hidden></div>
 
   {% include brain-atlas-footer.html %}
 </div>

@@ -51,18 +51,21 @@
   C.boot({
     csvUrl: "rat-brain-atlas.csv",
     getAtlas: getAtlas,
+    getImageUrl: function (index) {
+      return "images/Rat_Brain_Atlas_" + index + ".atlasbin";
+    },
     panels: ["coronal", "sagittal", "horizontal"],
     queryTitle: true,
     electrodeLine: true,
+    multiTarget: true,
   });
 
   function initRatRegionPresets() {
-    var form = document.getElementById("atlas-coord-form");
     var sel = document.getElementById("atlas-region-select");
     var ml = document.getElementById("input-ml");
     var ap = document.getElementById("input-ap");
     var dv = document.getElementById("input-dv");
-    if (!form || !sel || !ml || !ap || !dv) return;
+    if (!sel || !ml || !ap || !dv) return;
 
     var EPS = 1e-4;
 
@@ -70,19 +73,11 @@
       return Math.abs(a - b) <= EPS;
     }
 
-    function syncSelectFromUrl() {
-      var params = new URLSearchParams(window.location.search);
-      if (!params.has("ml") && !params.has("ap") && !params.has("dv")) {
-        sel.selectedIndex = 0;
-        return;
-      }
-      var nml = parseFloat(params.get("ml"));
-      var nap = parseFloat(params.get("ap"));
-      var ndv = parseFloat(params.get("dv"));
-      if (!Number.isFinite(nml) || !Number.isFinite(nap) || !Number.isFinite(ndv)) {
-        sel.selectedIndex = 0;
-        return;
-      }
+    function updateRegionSelectAppearance(index) {
+      sel.classList.toggle("atlas-region-pick__select--named", index > 0);
+    }
+
+    function matchRegionIndex(mlVal, apVal, dvVal) {
       for (var i = 0; i < sel.options.length; i++) {
         var o = sel.options[i];
         if (!o.value) continue;
@@ -93,38 +88,107 @@
           Number.isFinite(oml) &&
           Number.isFinite(oap) &&
           Number.isFinite(odv) &&
-          near(nml, oml) &&
-          near(nap, oap) &&
-          near(ndv, odv)
+          near(mlVal, oml) &&
+          near(apVal, oap) &&
+          near(dvVal, odv)
         ) {
-          sel.selectedIndex = i;
-          return;
+          return i;
         }
       }
-      sel.selectedIndex = 0;
+      return 0;
+    }
+
+    function syncSelectFromMultiText() {
+      if (!C.isMultiInputMode()) return;
+      var ta = document.getElementById("atlas-multi-input");
+      if (!ta || !String(ta.value).trim()) {
+        sel.selectedIndex = 0;
+        updateRegionSelectAppearance(0);
+        return;
+      }
+
+      var rawLines = C.extractRawTargetLines(ta.value);
+      var parsed = C.parseTargetText(ta.value);
+      if (rawLines.length !== 1 || parsed.targets.length !== 1 || parsed.errors.length) {
+        sel.selectedIndex = 0;
+        updateRegionSelectAppearance(0);
+        return;
+      }
+
+      var t = parsed.targets[0];
+      var idx = matchRegionIndex(t.ml, t.ap, t.dv);
+      sel.selectedIndex = idx;
+      updateRegionSelectAppearance(idx);
+    }
+
+    function syncSelectFromUrl() {
+      if (C.isMultiInputMode()) {
+        syncSelectFromMultiText();
+        return;
+      }
+      var params = new URLSearchParams(window.location.search);
+      if (!params.has("ml") && !params.has("ap") && !params.has("dv")) {
+        sel.selectedIndex = 0;
+        updateRegionSelectAppearance(0);
+        return;
+      }
+      var nml = parseFloat(params.get("ml"));
+      var nap = parseFloat(params.get("ap"));
+      var ndv = parseFloat(params.get("dv"));
+      if (!Number.isFinite(nml) || !Number.isFinite(nap) || !Number.isFinite(ndv)) {
+        sel.selectedIndex = 0;
+        updateRegionSelectAppearance(0);
+        return;
+      }
+      var idx = matchRegionIndex(nml, nap, ndv);
+      sel.selectedIndex = idx;
+      updateRegionSelectAppearance(idx);
     }
 
     sel.addEventListener("change", function () {
       var opt = sel.selectedOptions[0];
       if (!opt) return;
+
+      if (C.isMultiInputMode()) {
+        var ta = document.getElementById("atlas-multi-input");
+        if (!ta) return;
+        if (!opt.value || opt.getAttribute("data-ap") === null) {
+          ta.value = "";
+          updateRegionSelectAppearance(0);
+        } else {
+          ta.value = C.serializeTarget({
+            ml: parseFloat(opt.getAttribute("data-ml")),
+            ap: parseFloat(opt.getAttribute("data-ap")),
+            dv: parseFloat(opt.getAttribute("data-dv")),
+            mode: "crosshair",
+            dir: "ml",
+            angle: 0,
+          });
+          updateRegionSelectAppearance(sel.selectedIndex);
+        }
+        C.applyMultiCoords();
+        return;
+      }
+
       if (!opt.value || opt.getAttribute("data-ap") === null) {
         ml.value = "0";
         ap.value = "0";
         dv.value = "0";
+        updateRegionSelectAppearance(0);
       } else {
         ml.value = opt.getAttribute("data-ml") || "0";
         ap.value = opt.getAttribute("data-ap") || "0";
         dv.value = opt.getAttribute("data-dv") || "0";
+        updateRegionSelectAppearance(sel.selectedIndex);
       }
-      if (typeof form.requestSubmit === "function") {
-        form.requestSubmit();
-      } else {
-        form.submit();
-      }
+      C.applyStandardCoords();
     });
 
     if (C.onAtlasCoordsChanged) {
       C.onAtlasCoordsChanged(syncSelectFromUrl);
+    }
+    if (C.onMultiTargetsChanged) {
+      C.onMultiTargetsChanged(syncSelectFromMultiText);
     }
     syncSelectFromUrl();
   }

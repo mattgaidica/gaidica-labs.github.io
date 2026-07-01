@@ -1,0 +1,76 @@
+<form id="atlas-coord-form" class="atlas-coord-form" method="get" action="" novalidate>
+  <div class="atlas-form-header">
+    {% if include.multi %}
+    <div class="atlas-input-mode" role="radiogroup" aria-label="Input mode">
+      <label class="atlas-input-mode__option">
+        <input type="radio" name="atlas-input-mode" value="standard" checked>
+        <span>Standard</span>
+      </label>
+      <label class="atlas-input-mode__option">
+        <input type="radio" name="atlas-input-mode" value="multi">
+        <span>Multiple</span>
+      </label>
+    </div>
+    {% endif %}
+    <div class="atlas-form-header__pick">
+      {% if include.multi %}
+      {% include brain-atlas-region-select.html species='rat' %}
+      {% include brain-atlas-input-help.html multi=true %}
+      {% else %}
+      {% include brain-atlas-region-select.html species=include.species %}
+      {% include brain-atlas-input-help.html %}
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="atlas-coord-form__standard" id="atlas-coord-standard">
+    <div class="atlas-form-row">
+      <div class="field">
+        <div class="input-wrap">
+          <span>ML</span>
+          <input id="input-ml" name="ml" type="text" inputmode="decimal" autocomplete="off" value="0" aria-label="ML (mm)">
+          <span class="suffix">mm</span>
+        </div>
+      </div>
+      <div class="field">
+        <div class="input-wrap">
+          <span>AP</span>
+          <input id="input-ap" name="ap" type="text" inputmode="decimal" autocomplete="off" value="0" aria-label="AP (mm)">
+          <span class="suffix">mm</span>
+        </div>
+      </div>
+      <div class="field">
+        <div class="input-wrap">
+          <span>DV</span>
+          <input id="input-dv" name="dv" type="text" inputmode="decimal" autocomplete="off" value="0" aria-label="DV (mm)">
+          <span class="suffix">mm</span>
+        </div>
+      </div>
+    </div>
+    {% if include.multi %}
+    {% include brain-atlas-toolbar.html species='rat' %}
+    {% endif %}
+  </div>
+
+  {% if include.multi %}
+  <div class="atlas-coord-form__multi" id="atlas-coord-multi" hidden>
+    <label class="atlas-sr-only" for="atlas-multi-input">Multiple targets</label>
+    <textarea
+      id="atlas-multi-input"
+      class="atlas-multi-input"
+      rows="6"
+      spellcheck="false"
+    ></textarea>
+    <div class="atlas-multi-demos" id="atlas-multi-demos" role="group" aria-label="Example multiple-target inputs">
+      <button type="button" class="atlas-multi-demos__btn" data-demo="point">Multi-point</button>
+      <button type="button" class="atlas-multi-demos__btn" data-demo="angle">Multi-angle</button>
+      <button type="button" class="atlas-multi-demos__btn" data-demo="mixed">Multi-mixed</button>
+    </div>
+  </div>
+  {% endif %}
+</form>
+{% if include.multi %}
+<div id="atlas-target-legend" class="atlas-target-legend" hidden></div>
+{% endif %}
+<div id="atlas-print-settings" class="atlas-print-settings" aria-hidden="true"></div>
+<p id="atlas-form-error" class="atlas-form-error" role="alert" hidden></p>

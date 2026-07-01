@@ -36,12 +36,11 @@
   });
 
   function initMouseRegionPresets() {
-    var form = document.getElementById("atlas-coord-form");
     var sel = document.getElementById("atlas-region-select");
     var ml = document.getElementById("input-ml");
     var ap = document.getElementById("input-ap");
     var dv = document.getElementById("input-dv");
-    if (!form || !sel || !ml || !ap || !dv) return;
+    if (!sel || !ml || !ap || !dv) return;
 
     var EPS = 1e-4;
 
@@ -95,11 +94,7 @@
         ap.value = opt.getAttribute("data-ap") || "0";
         dv.value = opt.getAttribute("data-dv") || "0";
       }
-      if (typeof form.requestSubmit === "function") {
-        form.requestSubmit();
-      } else {
-        form.submit();
-      }
+      C.applyStandardCoords();
     });
 
     if (C.onAtlasCoordsChanged) {

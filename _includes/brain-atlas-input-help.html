@@ -1,0 +1,26 @@
+<details class="atlas-input-help">
+  <summary class="atlas-input-help__btn" aria-label="Input instructions">
+    <svg class="atlas-input-help__icon" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" focusable="false">
+      <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+      <path fill="currentColor" d="M11 17h2v-6h-2v6zm0-8h2V7h-2v2z"/>
+    </svg>
+  </summary>
+  <div class="atlas-input-help__panel" id="atlas-input-help-panel">
+    <div class="atlas-input-help__section" data-help-mode="standard">
+      <p class="atlas-input-help__title">Standard mode</p>
+      <p>Enter <strong>ML</strong>, <strong>AP</strong>, and <strong>DV</strong> in mm. The atlas updates as you type.</p>
+      <p>Use <strong>Crosshair</strong> or <strong>Line</strong> to show a point or angled electrode trajectory. Pick a structure preset to fill common coordinates.</p>
+      <p>Coordinates are relative to skull and Bregma plane.</p>
+    </div>
+    {% if include.multi %}
+    <div class="atlas-input-help__section" data-help-mode="multi" hidden>
+      <p class="atlas-input-help__title">Multiple mode</p>
+      <p>One target per line. Required fields: <code>ML=</code>, <code>AP=</code>, <code>DV=</code> (mm).</p>
+      <p>Optional: <code>Mode=Cross</code> or <code>Line</code>, <code>Dir=ML</code> or <code>AP</code>, <code>Angle=-45…45</code> (line mode only). Blank lines and <code>#</code> comments are ignored. Up to 16 targets.</p>
+      <p class="atlas-input-help__example">ML=0.8, AP=2.7, DV=-5.1, Mode=Line, Dir=AP, Angle=15</p>
+      <p>Try the example buttons below the text area to load sample inputs.</p>
+      <p>Coordinates are relative to skull and Bregma plane.</p>
+    </div>
+    {% endif %}
+  </div>
+</details>

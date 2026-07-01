@@ -1,0 +1,18 @@
+<div class="atlas-copy">
+  <details class="atlas-copy__details">
+    <summary class="atlas-copy__btn" id="atlas-copy-btn" aria-describedby="atlas-copy-status">
+      <svg class="atlas-copy__icon" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false">
+        <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+        <rect x="8" y="2" width="8" height="4" rx="1" ry="1" fill="none" stroke="currentColor" stroke-width="2"/>
+      </svg>
+      <span class="atlas-copy__label">Copy</span>
+    </summary>
+    <div class="atlas-copy__menu" role="menu">
+      <button type="button" class="atlas-copy__menu-item" data-copy-action="link" role="menuitem">Copy Link</button>
+      <button type="button" class="atlas-copy__menu-item atlas-copy__menu-item--secondary" data-copy-action="secondary" role="menuitem">
+        <span class="atlas-copy__secondary-label">Copy Settings</span>
+      </button>
+    </div>
+  </details>
+  <p id="atlas-copy-status" class="atlas-copy__status" role="status" aria-live="polite" hidden></p>
+</div>
