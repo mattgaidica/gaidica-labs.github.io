@@ -555,9 +555,22 @@
     if (g) g.innerHTML = "";
   }
 
+  function overlayMetric(name, fallback) {
+    try {
+      var body = document.body;
+      if (!body) return fallback;
+      var raw = getComputedStyle(body).getPropertyValue(name).trim();
+      var n = parseFloat(raw);
+      return Number.isFinite(n) ? n : fallback;
+    } catch (e) {
+      return fallback;
+    }
+  }
+
   function drawCrosshairOnSvg(g, x, y, color) {
-    var arm = 10;
-    var sw = 2;
+    var arm = overlayMetric("--atlas-overlay-crosshair-arm", 12);
+    var sw = overlayMetric("--atlas-overlay-stroke", 2.5);
+    var dotR = overlayMetric("--atlas-overlay-dot-r", 4);
     var coords = [
       [x - arm, y, x + arm, y],
       [x, y - arm, x, y + arm],
@@ -577,13 +590,15 @@
     var dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     dot.setAttribute("cx", String(x));
     dot.setAttribute("cy", String(y));
-    dot.setAttribute("r", "3");
+    dot.setAttribute("r", String(dotR));
     dot.setAttribute("fill", color);
     dot.setAttribute("class", "atlas-overlay-dot");
     g.appendChild(dot);
   }
 
   function drawLineTargetOnSvg(g, plane, cal, target, color) {
+    var stroke = overlayMetric("--atlas-overlay-stroke", 2.5);
+    var tipR = overlayMetric("--atlas-overlay-tip-r", 5);
     var ends = electrodeLineEndpoints(
       plane,
       cal,
@@ -600,7 +615,7 @@
       ln.setAttribute("x2", String(ends.x2));
       ln.setAttribute("y2", String(ends.y2));
       ln.setAttribute("stroke", color);
-      ln.setAttribute("stroke-width", "2");
+      ln.setAttribute("stroke-width", String(stroke));
       ln.setAttribute("stroke-linecap", "round");
       ln.setAttribute("class", "atlas-overlay-line");
       g.appendChild(ln);
@@ -609,7 +624,7 @@
     var tip = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     tip.setAttribute("cx", String(pos.x));
     tip.setAttribute("cy", String(pos.y));
-    tip.setAttribute("r", "4");
+    tip.setAttribute("r", String(tipR));
     tip.setAttribute("fill", color);
     tip.setAttribute("class", "atlas-overlay-dot");
     g.appendChild(tip);
@@ -929,12 +944,18 @@
 
   function appendMarkerParamsToQuery(q) {
     if (!hasElectrodeLineFeature()) return;
-    if (markerModeState === "line") q.set("mode", "line");
-    else q.delete("mode");
-    if (entryDirection === "ap") q.set("dir", "ap");
-    else q.delete("dir");
-    if (entryAngleDeg !== 0) q.set("angle", String(entryAngleDeg));
-    else q.delete("angle");
+    q.delete("view");
+    if (markerModeState === "line") {
+      q.set("mode", "line");
+      if (entryDirection === "ap") q.set("dir", "ap");
+      else q.delete("dir");
+      if (entryAngleDeg !== 0) q.set("angle", String(entryAngleDeg));
+      else q.delete("angle");
+      return;
+    }
+    q.delete("mode");
+    q.delete("dir");
+    q.delete("angle");
   }
 
   function buildAtlasQueryParams() {
@@ -1768,9 +1789,7 @@
       .then(function () {
         if (!isMultiInputMode()) {
           syncMarkerUi();
-          if (markerModeState === "line" || entryDirection === "ap" || entryAngleDeg !== 0) {
-            replaceAtlasUrl();
-          }
+          replaceAtlasUrl();
           initSliceNavigation();
           updateSliceNavButtonStates();
         }
@@ -2045,16 +2064,28 @@
       } catch (e) {}
     }
 
-    if (urlMarkerState && urlMarkerState.dir) entryDirection = urlMarkerState.dir;
-    else {
-      try {
-        var storedDir = localStorage.getItem(LS_ENTRY_DIRECTION);
-        if (storedDir === "ml" || storedDir === "ap") entryDirection = storedDir;
-      } catch (e) {}
-    }
+    if (markerModeState === "line") {
+      if (urlMarkerState && urlMarkerState.dir) entryDirection = urlMarkerState.dir;
+      else {
+        try {
+          var storedDir = localStorage.getItem(LS_ENTRY_DIRECTION);
+          if (storedDir === "ml" || storedDir === "ap") entryDirection = storedDir;
+        } catch (e) {}
+      }
 
-    if (urlMarkerState && urlMarkerState.angle !== undefined) entryAngleDeg = urlMarkerState.angle;
-    else entryAngleDeg = Math.round(clampNum(readStoredNum(LS_ENTRY_ANGLE, 0), -45, 45));
+      if (urlMarkerState && urlMarkerState.angle !== undefined) {
+        entryAngleDeg = urlMarkerState.angle;
+      } else {
+        entryAngleDeg = Math.round(clampNum(readStoredNum(LS_ENTRY_ANGLE, 0), -45, 45));
+      }
+    } else {
+      entryDirection = "ml";
+      try {
+        var storedDirCross = localStorage.getItem(LS_ENTRY_DIRECTION);
+        if (storedDirCross === "ml" || storedDirCross === "ap") entryDirection = storedDirCross;
+      } catch (e) {}
+      entryAngleDeg = Math.round(clampNum(readStoredNum(LS_ENTRY_ANGLE, 0), -45, 45));
+    }
 
     persistMarkerState();
 

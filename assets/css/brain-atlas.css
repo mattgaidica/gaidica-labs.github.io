@@ -21,7 +21,11 @@
   --atlas-fixed-footer-space: 2.85rem;
   --atlas-marker-opacity: 1;
   --atlas-marker-scale: 1;
-  --atlas-marker-line-width: 2;
+  --atlas-marker-line-width: 2.5;
+  --atlas-overlay-stroke: 2.5;
+  --atlas-overlay-crosshair-arm: 12;
+  --atlas-overlay-dot-r: 4;
+  --atlas-overlay-tip-r: 5;
   margin: 0;
   padding: 0 1rem calc(var(--atlas-fixed-footer-space) + env(safe-area-inset-bottom, 0px));
   font-family: "Raleway", system-ui, sans-serif;
@@ -884,7 +888,12 @@
 
 .lab-brain-atlas .atlas-overlay-line {
   paint-order: stroke;
+  stroke-width: var(--atlas-overlay-stroke);
   filter: drop-shadow(0 0 1px var(--atlas-marker-halo)) drop-shadow(0 0 2px rgba(0, 0, 0, 0.2));
+}
+
+.lab-brain-atlas .atlas-overlay-crosshair {
+  stroke-width: var(--atlas-overlay-stroke);
 }
 
 .lab-brain-atlas .atlas-electrode-svg {
@@ -1612,7 +1621,7 @@
 
   .lab-brain-atlas .atlas-electrode-line {
     opacity: 1 !important;
-    stroke-width: 2 !important;
+    stroke-width: 2.5 !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
