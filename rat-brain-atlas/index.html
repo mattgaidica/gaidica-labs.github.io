@@ -12,6 +12,7 @@ atlas_source_md: |
 atlas_cite_book: "Paxinos, George, and Charles Watson. The rat brain in stereotaxic coordinates: hard cover edition. Access Online via Elsevier, 2006."
 ---
 
+{% include brain-atlas-share.html %}
 <div class="atlas-inner">
   {% include brain-atlas-header.html %}
   <p id="atlas-query-title" class="atlas-subtitle" hidden></p>
@@ -48,10 +49,13 @@ atlas_cite_book: "Paxinos, George, and Charles Watson. The rat brain in stereota
   <hr>
 
   <section class="atlas-panel page-break">
-    <h2 class="atlas-panel__title">
-      <span class="atlas-panel__title-text">Coronal</span>
-      {% include brain-atlas-slice-nav.html plane='coronal' %}
-    </h2>
+    <div class="atlas-panel__header">
+      <h2 class="atlas-panel__title">
+        <span class="atlas-panel__title-text">Coronal</span>
+        {% include brain-atlas-slice-nav.html plane='coronal' %}
+      </h2>
+      {% include brain-atlas-panel-angle.html direction='ml' %}
+    </div>
     <div class="figure">
       <svg class="atlas-electrode-svg" id="coronal-electrode-svg" aria-hidden="true" focusable="false">
         <line class="atlas-electrode-line" id="coronal-electrode-line" />
@@ -62,10 +66,13 @@ atlas_cite_book: "Paxinos, George, and Charles Watson. The rat brain in stereota
   </section>
 
   <section class="atlas-panel page-break">
-    <h2 class="atlas-panel__title">
-      <span class="atlas-panel__title-text">Sagittal</span>
-      {% include brain-atlas-slice-nav.html plane='sagittal' %}
-    </h2>
+    <div class="atlas-panel__header">
+      <h2 class="atlas-panel__title">
+        <span class="atlas-panel__title-text">Sagittal</span>
+        {% include brain-atlas-slice-nav.html plane='sagittal' %}
+      </h2>
+      {% include brain-atlas-panel-angle.html direction='ap' %}
+    </div>
     <div class="figure">
       <svg class="atlas-electrode-svg" id="sagittal-electrode-svg" aria-hidden="true" focusable="false">
         <line class="atlas-electrode-line" id="sagittal-electrode-line" />

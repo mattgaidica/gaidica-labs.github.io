@@ -38,27 +38,17 @@
         <span>Line</span>
       </label>
     </div>
-    <div class="atlas-marker-tools__crosshair-only">
-      <div class="atlas-marker-tools__control">
-        <label class="atlas-marker-tools__mini-label" for="atlas-crosshair-scale">Size</label>
-        <input type="range" id="atlas-crosshair-scale" class="atlas-marker-tools__range" min="0.65" max="1.45" step="0.05" value="1" aria-label="Crosshair size">
-      </div>
-    </div>
     <div class="atlas-marker-tools__line-only" hidden>
-      <div class="atlas-marker-tools__control">
-        <label class="atlas-marker-tools__mini-label" for="atlas-entry-angle">Angle</label>
-        <input type="range" id="atlas-entry-angle" class="atlas-marker-tools__range atlas-marker-tools__range--wide" min="-45" max="45" step="1" value="0" aria-label="Entry angle from vertical in degrees, positive lateral">
-        <span class="atlas-marker-tools__angle-value" id="atlas-entry-angle-value" aria-hidden="true">0°</span>
+      <div class="atlas-entry-direction" role="radiogroup" aria-label="Angle plane">
+        <label class="atlas-marker-mode__option">
+          <input type="radio" name="atlas-entry-direction" value="ml" checked>
+          <span>ML</span>
+        </label>
+        <label class="atlas-marker-mode__option">
+          <input type="radio" name="atlas-entry-direction" value="ap">
+          <span>AP</span>
+        </label>
       </div>
-      <p class="atlas-marker-tools__line-readout" id="atlas-line-readout" aria-live="polite">0° · Entry ML at DV=0: — mm</p>
-    </div>
-  </div>
-  {% else %}
-  <div class="atlas-crosshair" role="group" aria-labelledby="atlas-crosshair-legend">
-    <span id="atlas-crosshair-legend" class="atlas-crosshair__legend">Crosshair</span>
-    <div class="atlas-crosshair__control">
-      <label class="atlas-crosshair__mini-label" for="atlas-crosshair-scale">Size</label>
-      <input type="range" id="atlas-crosshair-scale" class="atlas-crosshair__range" min="0.65" max="1.45" step="0.05" value="1" aria-label="Crosshair size">
     </div>
   </div>
   {% endif %}

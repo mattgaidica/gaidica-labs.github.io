@@ -1,0 +1,17 @@
+<div class="atlas-panel-angle" data-entry-direction="{{ include.direction }}" hidden>
+  <div class="atlas-panel-angle__bubble" role="group" aria-label="Entry angle of approach">
+    <label class="atlas-panel-angle__label" for="atlas-entry-angle-{{ include.direction }}">Angle</label>
+    <input
+      type="range"
+      id="atlas-entry-angle-{{ include.direction }}"
+      class="atlas-panel-angle__range"
+      min="-45"
+      max="45"
+      step="1"
+      value="0"
+      aria-label="Entry angle from vertical in degrees"
+    >
+    <span class="atlas-panel-angle__value" id="atlas-entry-angle-value-{{ include.direction }}" aria-hidden="true">0°</span>
+  </div>
+  <p class="atlas-panel-angle__readout" id="atlas-line-readout-{{ include.direction }}" aria-live="polite">0° · Entry ML at DV=0: — mm</p>
+</div>

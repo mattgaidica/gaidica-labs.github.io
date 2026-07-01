@@ -97,9 +97,20 @@
 
   var LS_MARKER_MODE = "labs.brainAtlas.markerMode";
   var LS_ENTRY_ANGLE = "labs.brainAtlas.entryAngle";
+  var LS_ENTRY_DIRECTION = "labs.brainAtlas.entryDirection";
   var lastAtlasPayload = null;
   var markerModeState = "crosshair";
   var entryAngleDeg = 0;
+  var entryDirection = "ml";
+  var replaceAtlasUrlDebounceId = null;
+
+  function hasElectrodeLineFeature() {
+    return !!(lastConfig && lastConfig.electrodeLine) || !!document.querySelector(".atlas-panel-angle");
+  }
+
+  function isElectrodeLineActive() {
+    return hasElectrodeLineFeature() && markerModeState === "line";
+  }
 
   function degToRad(deg) {
     return (deg * Math.PI) / 180;
@@ -110,14 +121,127 @@
     return ml - d * Math.tan(degToRad(angleDeg));
   }
 
-  function formatMlReadout(n) {
+  function computeElectrodeEntryAp(ap, dv, angleDeg) {
+    var d = Math.abs(dv);
+    return ap - d * Math.tan(degToRad(angleDeg));
+  }
+
+  function entryAngleForDirection(angleDeg, direction) {
+    return direction === "ml" ? -angleDeg : angleDeg;
+  }
+
+  function formatCoordReadout(n) {
     if (!Number.isFinite(n)) return "—";
     var s = n.toFixed(3).replace(/\.?0+$/, "");
     return s === "-0" ? "0" : s;
   }
 
-  function isElectrodeLineActive() {
-    return lastConfig && lastConfig.electrodeLine && markerModeState === "line";
+  function readMarkerStateFromUrl(params) {
+    if (!hasElectrodeLineFeature()) return null;
+    var q = params || new URLSearchParams(window.location.search);
+    var out = {};
+    if (q.has("mode")) {
+      var mode = q.get("mode");
+      if (mode === "line" || mode === "crosshair") out.mode = mode;
+    }
+    if (q.has("dir")) {
+      var dir = q.get("dir");
+      if (dir === "ml" || dir === "ap") out.dir = dir;
+    }
+    if (q.has("angle")) {
+      var angle = parseInt(q.get("angle"), 10);
+      if (Number.isFinite(angle)) out.angle = Math.round(clampNum(angle, -45, 45));
+    }
+    return Object.keys(out).length ? out : null;
+  }
+
+  function persistMarkerState() {
+    try {
+      localStorage.setItem(LS_MARKER_MODE, markerModeState);
+      localStorage.setItem(LS_ENTRY_DIRECTION, entryDirection);
+      writeStoredNum(LS_ENTRY_ANGLE, entryAngleDeg);
+    } catch (e) {}
+  }
+
+  function appendMarkerParamsToQuery(q) {
+    if (!hasElectrodeLineFeature()) return;
+    if (markerModeState === "line") q.set("mode", "line");
+    else q.delete("mode");
+    if (entryDirection === "ap") q.set("dir", "ap");
+    else q.delete("dir");
+    if (entryAngleDeg !== 0) q.set("angle", String(entryAngleDeg));
+    else q.delete("angle");
+  }
+
+  function buildAtlasQueryParams() {
+    var mlEl = document.getElementById("input-ml");
+    var apEl = document.getElementById("input-ap");
+    var dvEl = document.getElementById("input-dv");
+    if (!mlEl || !apEl || !dvEl) return null;
+    var q = new URLSearchParams(window.location.search);
+    q.set("ml", String(mlEl.value).trim() || "0");
+    q.set("ap", String(apEl.value).trim() || "0");
+    q.set("dv", String(dvEl.value).trim() || "0");
+    q.delete("size");
+    appendMarkerParamsToQuery(q);
+    return q;
+  }
+
+  function buildAtlasShareUrl() {
+    var q = buildAtlasQueryParams();
+    if (!q) return window.location.href;
+    var path = window.location.pathname;
+    var qs = q.toString();
+    return window.location.origin + path + (qs ? "?" + qs : "");
+  }
+
+  function flushReplaceAtlasUrl() {
+    if (replaceAtlasUrlDebounceId) {
+      clearTimeout(replaceAtlasUrlDebounceId);
+      replaceAtlasUrlDebounceId = null;
+    }
+    replaceAtlasUrl();
+  }
+
+  function replaceAtlasUrl() {
+    var q = buildAtlasQueryParams();
+    if (!q) return;
+    if (!window.history || !window.history.replaceState) return;
+    var path = window.location.pathname;
+    var qs = q.toString();
+    window.history.replaceState(null, "", path + (qs ? "?" + qs : ""));
+    for (var i = 0; i < coordsChangeListeners.length; i++) {
+      try {
+        coordsChangeListeners[i]();
+      } catch (err) {}
+    }
+  }
+
+  function scheduleReplaceAtlasUrl() {
+    if (replaceAtlasUrlDebounceId) clearTimeout(replaceAtlasUrlDebounceId);
+    replaceAtlasUrlDebounceId = setTimeout(function () {
+      replaceAtlasUrlDebounceId = null;
+      replaceAtlasUrl();
+    }, 400);
+  }
+
+  function syncMarkerToolbarVisibility() {
+    if (!hasElectrodeLineFeature()) return;
+    var lineOnly = document.querySelector(".atlas-marker-tools__line-only");
+    var isLine = markerModeState === "line";
+    if (lineOnly) lineOnly.hidden = !isLine;
+  }
+
+  function syncMarkerUi() {
+    syncMarkerToolbarVisibility();
+    if (lastAtlasPayload && lastConfig) {
+      relayoutMarkers();
+      return;
+    }
+    applyMarkerModeBodyClass();
+    syncPanelAngleVisibility();
+    syncAngleSliderValues();
+    refreshLineReadoutFromPayload();
   }
 
   function applyMarkerModeBodyClass() {
@@ -130,14 +254,32 @@
     }
   }
 
-  function updateLineReadout(angleDeg, mlEntry) {
-    var el = document.getElementById("atlas-line-readout");
-    var angleEl = document.getElementById("atlas-entry-angle-value");
+  function updateLineReadout(angleDeg, entryValue) {
     var angleInt = Math.round(angleDeg);
+    var entryLabel = entryDirection === "ap" ? "Entry AP at DV=0" : "Entry ML at DV=0";
+    var readoutText =
+      angleInt + "° · " + entryLabel + ": " + formatCoordReadout(entryValue) + " mm";
+
+    var angleEl = document.getElementById("atlas-entry-angle-value-" + entryDirection);
+    var readoutEl = document.getElementById("atlas-line-readout-" + entryDirection);
     if (angleEl) angleEl.textContent = angleInt + "°";
-    if (el) {
-      el.textContent =
-        angleInt + "° · Entry ML at DV=0: " + formatMlReadout(mlEntry) + " mm";
+    if (readoutEl) readoutEl.textContent = readoutText;
+  }
+
+  function syncAngleSliderValues() {
+    var mlIn = document.getElementById("atlas-entry-angle-ml");
+    var apIn = document.getElementById("atlas-entry-angle-ap");
+    if (mlIn) mlIn.value = String(entryAngleDeg);
+    if (apIn) apIn.value = String(entryAngleDeg);
+  }
+
+  function syncPanelAngleVisibility() {
+    var blocks = document.querySelectorAll(".atlas-panel-angle");
+    var showLine = isElectrodeLineActive();
+    for (var i = 0; i < blocks.length; i++) {
+      var block = blocks[i];
+      var dir = block.getAttribute("data-entry-direction");
+      block.hidden = !(showLine && dir === entryDirection);
     }
   }
 
@@ -156,30 +298,56 @@
     return { x1: x1, y1: y1, x2: xTarget, y2: yTarget };
   }
 
-  function electrodeLineEndpoints(plane, cal, ml, ap, dv, angleDeg) {
+  function electrodeLineEndpoints(plane, cal, ml, ap, dv, angleDeg, direction) {
     var d = Math.abs(dv);
-    var mlEntry = computeElectrodeEntryMl(ml, dv, angleDeg);
+    var effAngle = entryAngleForDirection(angleDeg, direction);
+    var mlEntry = computeElectrodeEntryMl(ml, dv, effAngle);
+    var apEntry = computeElectrodeEntryAp(ap, dv, effAngle);
 
-    if (plane === "coronal") {
-      var xEntry = cal.x0 + mlEntry * cal.pxx;
-      var yEntry = cal.y0;
-      var xTarget = cal.x0 + ml * cal.pxx;
-      var yTarget = cal.y0 + d * cal.pxy;
-      return extendLineToTop(xEntry, yEntry, xTarget, yTarget);
-    }
+    if (direction === "ml") {
+      if (plane === "coronal") {
+        var xEntryMl = cal.x0 + mlEntry * cal.pxx;
+        var yEntryMl = cal.y0;
+        var xTargetMl = cal.x0 + ml * cal.pxx;
+        var yTargetMl = cal.y0 + d * cal.pxy;
+        return extendLineToTop(xEntryMl, yEntryMl, xTargetMl, yTargetMl);
+      }
 
-    if (plane === "sagittal") {
-      var xSag = cal.x0 - ap * cal.pxx;
-      var yEntrySag = cal.y0;
-      var yTargetSag = cal.y0 + d * cal.pxy;
-      return extendLineToTop(xSag, yEntrySag, xSag, yTargetSag);
-    }
+      if (plane === "sagittal") {
+        var xSagMl = cal.x0 - ap * cal.pxx;
+        var yEntrySagMl = cal.y0;
+        var yTargetSagMl = cal.y0 + d * cal.pxy;
+        return extendLineToTop(xSagMl, yEntrySagMl, xSagMl, yTargetSagMl);
+      }
 
-    if (plane === "horizontal") {
-      var xHor = cal.x0 - ap * cal.pxx;
-      var yEntryHor = cal.y0 - mlEntry * cal.pxy;
-      var yTargetHor = cal.y0 - ml * cal.pxy;
-      return { x1: xHor, y1: yEntryHor, x2: xHor, y2: yTargetHor };
+      if (plane === "horizontal") {
+        var xHorMl = cal.x0 - ap * cal.pxx;
+        var yEntryHorMl = cal.y0 - mlEntry * cal.pxy;
+        var yTargetHorMl = cal.y0 - ml * cal.pxy;
+        return { x1: xHorMl, y1: yEntryHorMl, x2: xHorMl, y2: yTargetHorMl };
+      }
+    } else {
+      if (plane === "coronal") {
+        var xCorAp = cal.x0 + ml * cal.pxx;
+        var yEntryCorAp = cal.y0;
+        var yTargetCorAp = cal.y0 + d * cal.pxy;
+        return extendLineToTop(xCorAp, yEntryCorAp, xCorAp, yTargetCorAp);
+      }
+
+      if (plane === "sagittal") {
+        var xEntrySagAp = cal.x0 - apEntry * cal.pxx;
+        var yEntrySagAp = cal.y0;
+        var xTargetSagAp = cal.x0 - ap * cal.pxx;
+        var yTargetSagAp = cal.y0 + d * cal.pxy;
+        return extendLineToTop(xEntrySagAp, yEntrySagAp, xTargetSagAp, yTargetSagAp);
+      }
+
+      if (plane === "horizontal") {
+        var xEntryHorAp = cal.x0 - apEntry * cal.pxx;
+        var xTargetHorAp = cal.x0 - ap * cal.pxx;
+        var yHorAp = cal.y0 - ml * cal.pxy;
+        return { x1: xEntryHorAp, y1: yHorAp, x2: xTargetHorAp, y2: yHorAp };
+      }
     }
 
     return null;
@@ -201,7 +369,8 @@
         data.targetMl,
         data.targetAp,
         data.targetDv,
-        angleDeg
+        angleDeg,
+        entryDirection
       );
       if (!ends) return;
 
@@ -209,11 +378,6 @@
       lineEl.setAttribute("y1", String(ends.y1));
       lineEl.setAttribute("x2", String(ends.x2));
       lineEl.setAttribute("y2", String(ends.y2));
-
-      if (data.plane === "coronal") {
-        var mlEntry = computeElectrodeEntryMl(data.targetMl, data.targetDv, angleDeg);
-        updateLineReadout(angleDeg, mlEntry);
-      }
     }
 
     if (img.complete && img.naturalWidth) apply();
@@ -244,19 +408,27 @@
   function refreshLineReadoutFromPayload() {
     if (!isElectrodeLineActive() || !lastAtlasPayload) return;
     var cor = lastAtlasPayload.atlas.coronal;
-    if (!cor || cor.targetMl === undefined) return;
-    var mlEntry = computeElectrodeEntryMl(cor.targetMl, cor.targetDv, entryAngleDeg);
-    updateLineReadout(entryAngleDeg, mlEntry);
+    if (!cor || cor.targetMl === undefined || cor.targetAp === undefined) return;
+    var entryValue;
+    var effAngle = entryAngleForDirection(entryAngleDeg, entryDirection);
+    if (entryDirection === "ap") {
+      entryValue = computeElectrodeEntryAp(cor.targetAp, cor.targetDv, effAngle);
+    } else {
+      entryValue = computeElectrodeEntryMl(cor.targetMl, cor.targetDv, effAngle);
+    }
+    updateLineReadout(entryAngleDeg, entryValue);
   }
 
   function relayoutMarkers() {
     if (!lastAtlasPayload || !lastConfig) return;
     applyMarkerModeBodyClass();
+    syncPanelAngleVisibility();
     var atlas = lastAtlasPayload.atlas;
     for (var i = 0; i < lastConfig.panels.length; i++) {
       var key = lastConfig.panels[i];
       if (atlas[key]) layoutPanelMarkers(key, atlas[key]);
     }
+    if (isElectrodeLineActive()) refreshLineReadoutFromPayload();
   }
 
   function finishPanelImageLoad(prefix, data) {
@@ -363,6 +535,12 @@
           errEl.hidden = false;
         }
         firstBad.focus();
+        return;
+      }
+      if (lastRows && lastConfig) {
+        e.preventDefault();
+        replaceAtlasUrl();
+        redrawAtlasFromInputs();
       }
     });
 
@@ -454,23 +632,7 @@
   }
 
   function replaceUrlFromInputs() {
-    var mlEl = document.getElementById("input-ml");
-    var apEl = document.getElementById("input-ap");
-    var dvEl = document.getElementById("input-dv");
-    if (!mlEl || !apEl || !dvEl) return;
-    if (!window.history || !window.history.replaceState) return;
-    var q = new URLSearchParams(window.location.search);
-    q.set("ml", String(mlEl.value).trim() || "0");
-    q.set("ap", String(apEl.value).trim() || "0");
-    q.set("dv", String(dvEl.value).trim() || "0");
-    var path = window.location.pathname;
-    var qs = q.toString();
-    window.history.replaceState(null, "", path + (qs ? "?" + qs : ""));
-    for (var i = 0; i < coordsChangeListeners.length; i++) {
-      try {
-        coordsChangeListeners[i]();
-      } catch (err) {}
-    }
+    replaceAtlasUrl();
   }
 
   function uniqueSortedDepths(rows, planeType) {
@@ -631,7 +793,10 @@
         return chain;
       })
       .then(function () {
-        applyMarkerModeBodyClass();
+        syncMarkerUi();
+        if (markerModeState === "line" || entryDirection === "ap" || entryAngleDeg !== 0) {
+          replaceAtlasUrl();
+        }
         initSliceNavigation();
         updateSliceNavButtonStates();
       })
@@ -646,6 +811,81 @@
   }
 
   var citeStatusTimeoutId = null;
+  var shareStatusTimeoutId = null;
+
+  function copyTextToClipboard(text, onSuccess, onError) {
+    function fallbackCopy() {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        if (document.execCommand("copy")) {
+          if (onSuccess) onSuccess();
+        } else if (onError) {
+          onError();
+        }
+      } catch (err) {
+        if (onError) onError();
+      }
+      document.body.removeChild(ta);
+    }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(
+        function () {
+          if (onSuccess) onSuccess();
+        },
+        function () {
+          fallbackCopy();
+        }
+      );
+    } else {
+      fallbackCopy();
+    }
+  }
+
+  function initShareLink() {
+    var btn = document.getElementById("atlas-share-btn");
+    var statusEl = document.getElementById("atlas-share-status");
+    if (!btn) return;
+
+    function showStatus(msg, isError) {
+      if (!statusEl) return;
+      statusEl.textContent = msg;
+      statusEl.hidden = false;
+      if (isError) statusEl.classList.add("atlas-share__status--error");
+      else statusEl.classList.remove("atlas-share__status--error");
+      if (shareStatusTimeoutId !== null) {
+        window.clearTimeout(shareStatusTimeoutId);
+        shareStatusTimeoutId = null;
+      }
+      if (!isError && msg) {
+        shareStatusTimeoutId = window.setTimeout(function () {
+          shareStatusTimeoutId = null;
+          statusEl.hidden = true;
+          statusEl.textContent = "";
+        }, 3000);
+      }
+    }
+
+    btn.addEventListener("click", function () {
+      flushReplaceAtlasUrl();
+      var url = buildAtlasShareUrl();
+      copyTextToClipboard(
+        url,
+        function () {
+          showStatus("Link copied");
+        },
+        function () {
+          showStatus("Could not copy link", true);
+        }
+      );
+    });
+  }
 
   function initBrainAtlasFooter() {
     var btn = document.getElementById("atlas-cite-btn");
@@ -701,50 +941,19 @@
       }
     }
 
-    function fallbackCopy(text) {
-      var ta = document.createElement("textarea");
-      ta.value = text;
-      ta.setAttribute("readonly", "");
-      ta.style.position = "fixed";
-      ta.style.left = "-9999px";
-      document.body.appendChild(ta);
-      ta.select();
-      try {
-        if (document.execCommand("copy")) {
-          showStatus("Copied to clipboard.");
-        } else {
-          showStatus(
-            "Could not copy automatically. Copy the atlas source text above.",
-            true
-          );
-        }
-      } catch (err) {
-        showStatus(
-          "Could not copy automatically. Copy the atlas source text above.",
-          true
-        );
-      }
-      document.body.removeChild(ta);
-    }
-
     btn.addEventListener("click", function () {
       var text = buildCiteText();
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(
-          function () {
-            showStatus("Copied to clipboard.");
-          },
-          function () {
-            fallbackCopy(text);
-          }
-        );
-      } else {
-        fallbackCopy(text);
-      }
+      copyTextToClipboard(
+        text,
+        function () {
+          showStatus("Copied to clipboard.");
+        },
+        function () {
+          showStatus("Could not copy automatically. Copy the atlas source text above.", true);
+        }
+      );
     });
   }
-
-  var LS_CROSSHAIR_SCALE = "labs.brainAtlas.crosshairScale";
 
   function readStoredNum(key, fallback) {
     try {
@@ -767,93 +976,88 @@
     return Math.min(hi, Math.max(lo, n));
   }
 
-  function applyMarkerStyleVars(scale) {
-    var body = document.body;
-    if (!body) return;
-    body.style.setProperty("--atlas-marker-scale", String(scale));
-    body.style.setProperty("--atlas-marker-line-width", String(2 * scale));
-  }
-
   function initMarkerModeControls() {
     var modeRadios = document.querySelectorAll('input[name="atlas-marker-mode"]');
     if (!modeRadios.length) return;
 
-    var crosshairOnly = document.querySelector(".atlas-marker-tools__crosshair-only");
-    var lineOnly = document.querySelector(".atlas-marker-tools__line-only");
-    var angleIn = document.getElementById("atlas-entry-angle");
+    var angleInputs = document.querySelectorAll(".atlas-panel-angle__range");
+    var directionRadios = document.querySelectorAll('input[name="atlas-entry-direction"]');
 
     markerModeState = "crosshair";
-    try {
-      var storedMode = localStorage.getItem(LS_MARKER_MODE);
-      if (storedMode === "line" || storedMode === "crosshair") markerModeState = storedMode;
-    } catch (e) {}
+    entryDirection = "ml";
+    entryAngleDeg = 0;
 
-    entryAngleDeg = Math.round(clampNum(readStoredNum(LS_ENTRY_ANGLE, 0), -45, 45));
+    var urlMarkerState = readMarkerStateFromUrl();
+    if (urlMarkerState && urlMarkerState.mode) markerModeState = urlMarkerState.mode;
+    else {
+      try {
+        var storedMode = localStorage.getItem(LS_MARKER_MODE);
+        if (storedMode === "line" || storedMode === "crosshair") markerModeState = storedMode;
+      } catch (e) {}
+    }
+
+    if (urlMarkerState && urlMarkerState.dir) entryDirection = urlMarkerState.dir;
+    else {
+      try {
+        var storedDir = localStorage.getItem(LS_ENTRY_DIRECTION);
+        if (storedDir === "ml" || storedDir === "ap") entryDirection = storedDir;
+      } catch (e) {}
+    }
+
+    if (urlMarkerState && urlMarkerState.angle !== undefined) entryAngleDeg = urlMarkerState.angle;
+    else entryAngleDeg = Math.round(clampNum(readStoredNum(LS_ENTRY_ANGLE, 0), -45, 45));
+
+    persistMarkerState();
 
     for (var i = 0; i < modeRadios.length; i++) {
       var r = modeRadios[i];
       r.checked = r.value === markerModeState;
     }
-    if (angleIn) angleIn.value = String(entryAngleDeg);
+    for (var d = 0; d < directionRadios.length; d++) {
+      directionRadios[d].checked = directionRadios[d].value === entryDirection;
+    }
+    syncAngleSliderValues();
     refreshLineReadoutFromPayload();
 
     function syncModeUi() {
-      var isLine = markerModeState === "line";
-      if (crosshairOnly) crosshairOnly.hidden = isLine;
-      if (lineOnly) lineOnly.hidden = !isLine;
-      applyMarkerModeBodyClass();
-      if (isLine) refreshLineReadoutFromPayload();
-      relayoutMarkers();
+      syncMarkerUi();
     }
 
     for (var j = 0; j < modeRadios.length; j++) {
       modeRadios[j].addEventListener("change", function () {
         if (!this.checked) return;
         markerModeState = this.value === "line" ? "line" : "crosshair";
-        try {
-          localStorage.setItem(LS_MARKER_MODE, markerModeState);
-        } catch (e) {}
+        persistMarkerState();
+        replaceAtlasUrl();
         syncModeUi();
       });
     }
 
-    if (angleIn) {
-      angleIn.addEventListener("input", function () {
-        var a = parseFloat(angleIn.value);
-        if (!Number.isFinite(a)) return;
-        entryAngleDeg = Math.round(clampNum(a, -45, 45));
-        angleIn.value = String(entryAngleDeg);
-        writeStoredNum(LS_ENTRY_ANGLE, entryAngleDeg);
+    for (var a = 0; a < angleInputs.length; a++) {
+      angleInputs[a].addEventListener("input", function () {
+        var val = parseFloat(this.value);
+        if (!Number.isFinite(val)) return;
+        entryAngleDeg = Math.round(clampNum(val, -45, 45));
+        syncAngleSliderValues();
+        persistMarkerState();
+        scheduleReplaceAtlasUrl();
+        relayoutMarkers();
+      });
+    }
+
+    for (var k = 0; k < directionRadios.length; k++) {
+      directionRadios[k].addEventListener("change", function () {
+        if (!this.checked) return;
+        entryDirection = this.value === "ap" ? "ap" : "ml";
+        persistMarkerState();
+        replaceAtlasUrl();
+        syncPanelAngleVisibility();
+        refreshLineReadoutFromPayload();
         relayoutMarkers();
       });
     }
 
     syncModeUi();
-  }
-
-  function initCrosshairControls() {
-    var body = document.body;
-    if (!body || !body.classList.contains("lab-brain-atlas")) return;
-
-    var scIn = document.getElementById("atlas-crosshair-scale");
-    if (!scIn) return;
-
-    var SC_MIN = 0.65;
-    var SC_MAX = 1.45;
-    var SC_DEFAULT = 1;
-
-    var scale = clampNum(readStoredNum(LS_CROSSHAIR_SCALE, SC_DEFAULT), SC_MIN, SC_MAX);
-
-    scIn.value = String(scale);
-    applyMarkerStyleVars(scale);
-
-    scIn.addEventListener("input", function () {
-      var s = parseFloat(scIn.value);
-      if (!Number.isFinite(s)) return;
-      s = clampNum(s, SC_MIN, SC_MAX);
-      applyMarkerStyleVars(s);
-      writeStoredNum(LS_CROSSHAIR_SCALE, s);
-    });
   }
 
   global.BrainAtlasCommon = {
@@ -867,8 +1071,8 @@
   };
 
   function initBrainAtlasUi() {
-    initCrosshairControls();
     initMarkerModeControls();
+    initShareLink();
     initBrainAtlasFooter();
   }
 
