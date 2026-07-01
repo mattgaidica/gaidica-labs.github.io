@@ -19,11 +19,21 @@
         imageUrl: "images/Mouse_Brain_Atlas_" + cor.index + ".atlasbin",
         left: cor.x0 - ml * cor.pxx,
         top: cor.y0 + dv * cor.pxy,
+        plane: "coronal",
+        cal: { x0: cor.x0, y0: cor.y0, pxx: cor.pxx, pxy: cor.pxy },
+        targetAp: ap,
+        targetMl: ml,
+        targetDv: dv,
       },
       sagittal: {
         imageUrl: "images/Mouse_Brain_Atlas_" + sag.index + ".atlasbin",
         left: sag.x0 + -ap * sag.pxx,
         top: sag.y0 + dv * sag.pxy,
+        plane: "sagittal",
+        cal: { x0: sag.x0, y0: sag.y0, pxx: sag.pxx, pxy: sag.pxy },
+        targetAp: ap,
+        targetMl: ml,
+        targetDv: dv,
       },
     };
   }
@@ -31,77 +41,14 @@
   C.boot({
     csvUrl: "mouse-brain-atlas.csv",
     getAtlas: getAtlas,
+    getImageUrl: function (index) {
+      return "images/Mouse_Brain_Atlas_" + index + ".atlasbin";
+    },
     panels: ["coronal", "sagittal"],
+    coronalMlSign: -1,
+    downloadPrefix: "MouseBrainAtlas",
     queryTitle: true,
+    electrodeLine: true,
+    multiTarget: true,
   });
-
-  function initMouseRegionPresets() {
-    var sel = document.getElementById("atlas-region-select");
-    var ml = document.getElementById("input-ml");
-    var ap = document.getElementById("input-ap");
-    var dv = document.getElementById("input-dv");
-    if (!sel || !ml || !ap || !dv) return;
-
-    var EPS = 1e-4;
-
-    function near(a, b) {
-      return Math.abs(a - b) <= EPS;
-    }
-
-    function syncSelectFromUrl() {
-      var params = new URLSearchParams(window.location.search);
-      if (!params.has("ml") && !params.has("ap") && !params.has("dv")) {
-        sel.selectedIndex = 0;
-        return;
-      }
-      var nml = parseFloat(params.get("ml"));
-      var nap = parseFloat(params.get("ap"));
-      var ndv = parseFloat(params.get("dv"));
-      if (!Number.isFinite(nml) || !Number.isFinite(nap) || !Number.isFinite(ndv)) {
-        sel.selectedIndex = 0;
-        return;
-      }
-      for (var i = 0; i < sel.options.length; i++) {
-        var o = sel.options[i];
-        if (!o.value) continue;
-        var oml = parseFloat(o.getAttribute("data-ml"));
-        var oap = parseFloat(o.getAttribute("data-ap"));
-        var odv = parseFloat(o.getAttribute("data-dv"));
-        if (
-          Number.isFinite(oml) &&
-          Number.isFinite(oap) &&
-          Number.isFinite(odv) &&
-          near(nml, oml) &&
-          near(nap, oap) &&
-          near(ndv, odv)
-        ) {
-          sel.selectedIndex = i;
-          return;
-        }
-      }
-      sel.selectedIndex = 0;
-    }
-
-    sel.addEventListener("change", function () {
-      var opt = sel.selectedOptions[0];
-      if (!opt) return;
-      if (!opt.value || opt.getAttribute("data-ap") === null) {
-        ml.value = "0";
-        ap.value = "0";
-        dv.value = "0";
-      } else {
-        ml.value = opt.getAttribute("data-ml") || "0";
-        ap.value = opt.getAttribute("data-ap") || "0";
-        dv.value = opt.getAttribute("data-dv") || "0";
-      }
-      C.applyStandardCoords();
-    });
-
-    if (C.onAtlasCoordsChanged) {
-      C.onAtlasCoordsChanged(syncSelectFromUrl);
-    }
-    syncSelectFromUrl();
-  }
-
-  initMouseRegionPresets();
 })();

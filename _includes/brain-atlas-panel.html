@@ -1,0 +1,24 @@
+{% assign plane_id = include.plane %}
+{% assign plane_label = include.plane | capitalize %}
+<section class="atlas-panel{% if include.page_break %} page-break{% endif %}">
+  {% if include.angle %}
+  <div class="atlas-panel__header">
+    <h2 class="atlas-panel__title">
+      <span class="atlas-panel__title-text">{{ plane_label }}</span>
+      {% include brain-atlas-slice-nav.html plane=plane_id %}
+    </h2>
+    {% include brain-atlas-panel-angle.html direction=include.angle %}
+  </div>
+  {% else %}
+  <h2 class="atlas-panel__title">
+    <span class="atlas-panel__title-text">{{ plane_label }}</span>
+    {% include brain-atlas-slice-nav.html plane=plane_id %}
+  </h2>
+  {% endif %}
+  <div class="figure">
+    <svg class="atlas-overlay-svg" id="{{ plane_id }}-overlay-svg" data-plane="{{ plane_id }}" aria-hidden="true" focusable="false">
+      <g class="atlas-targets"></g>
+    </svg>
+    <img id="{{ plane_id }}-img" src="" alt="{{ plane_label }} section">
+  </div>
+</section>

@@ -13,12 +13,22 @@
       <p>Coordinates are relative to skull and Bregma plane.</p>
     </div>
     {% if include.multi %}
+    {% if include.species == 'mouse' %}
+      {% assign demo_regions = site.data.mouse_atlas_regions %}
+    {% else %}
+      {% assign demo_regions = site.data.rat_atlas_regions %}
+    {% endif %}
     <div class="atlas-input-help__section" data-help-mode="multi" hidden>
       <p class="atlas-input-help__title">Multiple mode</p>
       <p>One target per line. Required fields: <code>ML=</code>, <code>AP=</code>, <code>DV=</code> (mm).</p>
       <p>Optional: <code>Mode=Cross</code> or <code>Line</code>, <code>Dir=ML</code> or <code>AP</code>, <code>Angle=-45…45</code> (line mode only). Blank lines and <code>#</code> comments are ignored. Up to 16 targets.</p>
-      <p class="atlas-input-help__example">ML=0.8, AP=2.7, DV=-5.1, Mode=Line, Dir=AP, Angle=15</p>
-      <p>Try the example buttons below the text area to load sample inputs.</p>
+      {% for r in demo_regions %}
+      {% if r.ap %}
+      <p class="atlas-input-help__example">ML={{ r.ml }}, AP={{ r.ap }}, DV={{ r.dv }}, Mode=Line, Dir=AP, Angle=15</p>
+      {% break %}
+      {% endif %}
+      {% endfor %}
+      <p>Try the example buttons below the text area to load structure-preset sample inputs.</p>
       <p>Coordinates are relative to skull and Bregma plane.</p>
     </div>
     {% endif %}

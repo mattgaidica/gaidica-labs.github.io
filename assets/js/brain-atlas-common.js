@@ -91,6 +91,20 @@
   var entryDirection = "ml";
   var replaceAtlasUrlDebounceId = null;
   var LS_MULTI_TEXT = "labs.brainAtlas.multiText";
+
+  function multiTextSessionKey() {
+    return LS_MULTI_TEXT + ":" + window.location.pathname;
+  }
+
+  function coronalMlSign() {
+    return lastConfig && lastConfig.coronalMlSign === -1 ? -1 : 1;
+  }
+
+  function panelOrder() {
+    return lastConfig && lastConfig.panels && lastConfig.panels.length
+      ? lastConfig.panels
+      : PLANE_ORDER;
+  }
   var MAX_TARGETS = 16;
   var PARULA_16 = [
     "#352a87", "#f5c832", "#2f9590", "#d74d2c", "#5fc25a", "#7f1a7a",
@@ -100,30 +114,71 @@
   var PLANE_ORDER = ["coronal", "sagittal", "horizontal"];
   var standardRedrawDebounceId = null;
   var multiRedrawDebounceId = null;
-  var MULTI_DEMO_TEXT = {
-    point: [
-      "ML=0.8, AP=2.7, DV=-5.1",
-      "ML=1.2, AP=2.7, DV=-5.1",
-      "ML=0.8, AP=3.2, DV=-3.35",
-      "ML=0.6, AP=1.6, DV=-3.5",
-      "ML=1.7, AP=1.45, DV=-6.85",
-    ].join("\n"),
-    angle: [
-      "ML=0.8, AP=2.7, DV=-5.1, Mode=Line, Dir=ML, Angle=15",
-      "ML=0.8, AP=2.7, DV=-5.1, Mode=Line, Dir=AP, Angle=-10",
-      "ML=0.8, AP=3.2, DV=-3.35, Mode=Line, Dir=ML, Angle=25",
-      "ML=0.6, AP=1.6, DV=-3.5, Mode=Line, Dir=AP, Angle=20",
-      "ML=1.7, AP=1.45, DV=-6.85, Mode=Line, Dir=ML, Angle=-15",
-    ].join("\n"),
-    mixed: [
-      "ML=0.8, AP=2.7, DV=-5.1",
-      "ML=0.8, AP=2.7, DV=-5.1, Mode=Line, Dir=AP, Angle=15",
-      "ML=1.2, AP=2.7, DV=-5.1",
-      "ML=0.8, AP=3.2, DV=-3.35, Mode=Line, Dir=ML, Angle=-12",
-      "ML=1.7, AP=1.45, DV=-6.85",
-      "ML=0.6, AP=1.6, DV=-3.5, Mode=Line, Dir=AP, Angle=10",
-    ].join("\n"),
-  };
+  var MULTI_DEMO_ANGLE_SPECS = [
+    { dir: "ml", angle: 15 },
+    { dir: "ap", angle: -10 },
+    { dir: "ml", angle: 25 },
+    { dir: "ap", angle: 20 },
+    { dir: "ml", angle: -15 },
+  ];
+  var MULTI_DEMO_MIXED_SPECS = [
+    null,
+    { dir: "ap", angle: 15 },
+    null,
+    { dir: "ml", angle: -12 },
+    null,
+    { dir: "ap", angle: 10 },
+  ];
+
+  function readRegionPresetsFromSelect() {
+    var sel = document.getElementById("atlas-region-select");
+    if (!sel) return [];
+    var out = [];
+    for (var i = 0; i < sel.options.length; i++) {
+      var opt = sel.options[i];
+      if (!opt.value) continue;
+      var ml = parseFloat(opt.getAttribute("data-ml"));
+      var ap = parseFloat(opt.getAttribute("data-ap"));
+      var dv = parseFloat(opt.getAttribute("data-dv"));
+      if (!Number.isFinite(ml) || !Number.isFinite(ap) || !Number.isFinite(dv)) continue;
+      out.push({ ml: ml, ap: ap, dv: dv });
+    }
+    return out;
+  }
+
+  function buildMultiDemoText(kind) {
+    var regions = readRegionPresetsFromSelect();
+    if (!regions.length) return "";
+    var limits = { point: 5, angle: 5, mixed: 6 };
+    var limit = Math.min(limits[kind] || 5, regions.length);
+    var lines = [];
+    for (var i = 0; i < limit; i++) {
+      var region = regions[i];
+      var target = {
+        ml: region.ml,
+        ap: region.ap,
+        dv: region.dv,
+        mode: "crosshair",
+        dir: "ml",
+        angle: 0,
+      };
+      if (kind === "angle") {
+        var angleSpec = MULTI_DEMO_ANGLE_SPECS[i % MULTI_DEMO_ANGLE_SPECS.length];
+        target.mode = "line";
+        target.dir = angleSpec.dir;
+        target.angle = angleSpec.angle;
+      } else if (kind === "mixed") {
+        var mixedSpec = MULTI_DEMO_MIXED_SPECS[i % MULTI_DEMO_MIXED_SPECS.length];
+        if (mixedSpec) {
+          target.mode = "line";
+          target.dir = mixedSpec.dir;
+          target.angle = mixedSpec.angle;
+        }
+      }
+      lines.push(serializeTarget(target));
+    }
+    return lines.join("\n");
+  }
 
   function isMultiInputMode() {
     if (new URLSearchParams(window.location.search).get("view") !== "multi") return false;
@@ -132,7 +187,7 @@
 
   function readMultiTextFromSession() {
     try {
-      return sessionStorage.getItem(LS_MULTI_TEXT) || "";
+      return sessionStorage.getItem(multiTextSessionKey()) || "";
     } catch (e) {
       return "";
     }
@@ -140,7 +195,7 @@
 
   function writeMultiTextToSession(text) {
     try {
-      sessionStorage.setItem(LS_MULTI_TEXT, text);
+      sessionStorage.setItem(multiTextSessionKey(), text);
     } catch (e) {}
   }
 
@@ -447,11 +502,12 @@
   }
 
   function groupTargetsByPlate(targets, rows, imageUrlFn) {
+    var planes = panelOrder();
     var map = {};
     for (var i = 0; i < targets.length; i++) {
       var tgt = targets[i];
-      for (var p = 0; p < PLANE_ORDER.length; p++) {
-        var plane = PLANE_ORDER[p];
+      for (var p = 0; p < planes.length; p++) {
+        var plane = planes[p];
         var lookup = depthLookupForPlane(plane, tgt);
         var row = closestByType(rows, plane, lookup);
         if (!row) continue;
@@ -473,8 +529,8 @@
     keys.sort(function (a, b) {
       var ga = map[a];
       var gb = map[b];
-      var pa = PLANE_ORDER.indexOf(ga.plane);
-      var pb = PLANE_ORDER.indexOf(gb.plane);
+      var pa = planes.indexOf(ga.plane);
+      var pb = planes.indexOf(gb.plane);
       if (pa !== pb) return pa - pb;
       return ga.row.depth - gb.row.depth;
     });
@@ -486,7 +542,7 @@
   function targetPositionOnPlane(plane, cal, ml, ap, dv) {
     var d = Math.abs(dv);
     if (plane === "coronal") {
-      return { x: cal.x0 + ml * cal.pxx, y: cal.y0 + d * cal.pxy };
+      return { x: cal.x0 + coronalMlSign() * ml * cal.pxx, y: cal.y0 + d * cal.pxy };
     }
     if (plane === "sagittal") {
       return { x: cal.x0 - ap * cal.pxx, y: cal.y0 + d * cal.pxy };
@@ -708,7 +764,7 @@
       var stored = readMultiTextFromSession();
       if (stored) ta.value = stored;
     }
-    updateCopyMenuLabels();
+    updateCopyMenuUi();
     syncInputHelpVisibility();
   }
 
@@ -741,8 +797,9 @@
       var btn = e.target.closest("[data-demo]");
       if (!btn) return;
       var key = btn.getAttribute("data-demo");
-      if (!MULTI_DEMO_TEXT[key]) return;
-      ta.value = MULTI_DEMO_TEXT[key];
+      var text = buildMultiDemoText(key);
+      if (!text) return;
+      ta.value = text;
       writeMultiTextToSession(ta.value);
       ta.removeAttribute("aria-invalid");
       ta.removeAttribute("aria-describedby");
@@ -756,10 +813,55 @@
     });
   }
 
-  function updateCopyMenuLabels() {
-    var secondary = document.querySelector(".atlas-copy__secondary-label");
-    if (!secondary) return;
-    secondary.textContent = isMultiInputMode() ? "Copy Text" : "Copy Settings";
+  function updateCopyMenuUi() {
+    var multi = isMultiInputMode();
+    var standardItems = document.querySelectorAll(".atlas-copy__menu-item--standard");
+    var multiItems = document.querySelectorAll(".atlas-copy__menu-item--multi");
+    for (var i = 0; i < standardItems.length; i++) {
+      standardItems[i].setAttribute("aria-hidden", multi ? "true" : "false");
+    }
+    for (var j = 0; j < multiItems.length; j++) {
+      multiItems[j].setAttribute("aria-hidden", multi ? "false" : "true");
+    }
+  }
+
+  function formatAtlasDownloadFilename() {
+    var d = new Date();
+    var p = function (n) {
+      return String(n).padStart(2, "0");
+    };
+    var prefix =
+      lastConfig && lastConfig.downloadPrefix ? lastConfig.downloadPrefix : "RatBrainAtlas";
+    return (
+      prefix +
+      "_" +
+      d.getFullYear() +
+      p(d.getMonth() + 1) +
+      p(d.getDate()) +
+      p(d.getHours()) +
+      p(d.getMinutes()) +
+      ".txt"
+    );
+  }
+
+  function downloadMultiTargetText(onSuccess, onError) {
+    var ta = document.getElementById("atlas-multi-input");
+    var text = ta ? ta.value : "";
+    try {
+      var blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = formatAtlasDownloadFilename();
+      a.style.display = "none";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      if (onSuccess) onSuccess();
+    } catch (err) {
+      if (onError) onError(err);
+    }
   }
 
   function hasElectrodeLineFeature() {
@@ -784,8 +886,12 @@
     return ap - d * Math.tan(degToRad(angleDeg));
   }
 
-  function entryAngleForDirection(angleDeg, direction) {
-    return direction === "ml" ? -angleDeg : angleDeg;
+  function entryAngleForDirection(angleDeg, direction, plane) {
+    var sign = direction === "ml" ? -1 : 1;
+    if (plane === "coronal" && direction === "ml" && coronalMlSign() === -1) {
+      sign = -sign;
+    }
+    return sign * angleDeg;
   }
 
   function formatCoordReadout(n) {
@@ -961,15 +1067,16 @@
 
   function electrodeLineEndpoints(plane, cal, ml, ap, dv, angleDeg, direction) {
     var d = Math.abs(dv);
-    var effAngle = entryAngleForDirection(angleDeg, direction);
+    var effAngle = entryAngleForDirection(angleDeg, direction, plane);
     var mlEntry = computeElectrodeEntryMl(ml, dv, effAngle);
     var apEntry = computeElectrodeEntryAp(ap, dv, effAngle);
+    var cSign = coronalMlSign();
 
     if (direction === "ml") {
       if (plane === "coronal") {
-        var xEntryMl = cal.x0 + mlEntry * cal.pxx;
+        var xEntryMl = cal.x0 + cSign * mlEntry * cal.pxx;
         var yEntryMl = cal.y0;
-        var xTargetMl = cal.x0 + ml * cal.pxx;
+        var xTargetMl = cal.x0 + cSign * ml * cal.pxx;
         var yTargetMl = cal.y0 + d * cal.pxy;
         return extendLineToTop(xEntryMl, yEntryMl, xTargetMl, yTargetMl);
       }
@@ -989,7 +1096,7 @@
       }
     } else {
       if (plane === "coronal") {
-        var xCorAp = cal.x0 + ml * cal.pxx;
+        var xCorAp = cal.x0 + cSign * ml * cal.pxx;
         var yEntryCorAp = cal.y0;
         var yTargetCorAp = cal.y0 + d * cal.pxy;
         return extendLineToTop(xCorAp, yEntryCorAp, xCorAp, yTargetCorAp);
@@ -1058,7 +1165,11 @@
     var cor = lastAtlasPayload.atlas.coronal;
     if (!cor || cor.targetMl === undefined || cor.targetAp === undefined) return;
     var entryValue;
-    var effAngle = entryAngleForDirection(entryAngleDeg, entryDirection);
+    var effAngle = entryAngleForDirection(
+      entryAngleDeg,
+      entryDirection,
+      entryDirection === "ml" ? "coronal" : "sagittal"
+    );
     if (entryDirection === "ap") {
       entryValue = computeElectrodeEntryAp(cor.targetAp, cor.targetDv, effAngle);
     } else {
@@ -1747,10 +1858,9 @@
         e.preventDefault();
         var action = this.getAttribute("data-copy-action");
         if (action === "link") {
-          if (!isMultiInputMode()) flushReplaceAtlasUrl();
-          var url = isMultiInputMode() ? buildMultiModeUrl() : buildAtlasShareUrl();
+          flushReplaceAtlasUrl();
           copyTextToClipboard(
-            url,
+            buildAtlasShareUrl(),
             function () {
               showStatus("Link copied");
               closeMenu();
@@ -1761,27 +1871,48 @@
           );
           return;
         }
-        var text;
-        if (isMultiInputMode()) {
-          var ta = document.getElementById("atlas-multi-input");
-          text = ta ? ta.value : "";
-        } else {
-          text = serializeCurrentSettings();
+        if (action === "text-for-multi") {
+          copyTextToClipboard(
+            serializeCurrentSettings(),
+            function () {
+              showStatus("Text copied");
+              closeMenu();
+            },
+            function () {
+              showStatus("Could not copy", true);
+            }
+          );
+          return;
         }
-        copyTextToClipboard(
-          text,
-          function () {
-            showStatus(isMultiInputMode() ? "Text copied" : "Settings copied");
-            closeMenu();
-          },
-          function () {
-            showStatus("Could not copy", true);
-          }
-        );
+        if (action === "text") {
+          var ta = document.getElementById("atlas-multi-input");
+          copyTextToClipboard(
+            ta ? ta.value : "",
+            function () {
+              showStatus("Text copied");
+              closeMenu();
+            },
+            function () {
+              showStatus("Could not copy", true);
+            }
+          );
+          return;
+        }
+        if (action === "download") {
+          downloadMultiTargetText(
+            function () {
+              showStatus("Download started");
+              closeMenu();
+            },
+            function () {
+              showStatus("Could not download", true);
+            }
+          );
+        }
       });
     }
 
-    updateCopyMenuLabels();
+    updateCopyMenuUi();
   }
 
   function initInputModeToggle() {
@@ -1997,12 +2128,142 @@
     },
   };
 
+  function initRegionPresets() {
+    var sel = document.getElementById("atlas-region-select");
+    var ml = document.getElementById("input-ml");
+    var ap = document.getElementById("input-ap");
+    var dv = document.getElementById("input-dv");
+    if (!sel || !ml || !ap || !dv) return;
+
+    var EPS = 1e-4;
+
+    function near(a, b) {
+      return Math.abs(a - b) <= EPS;
+    }
+
+    function updateRegionSelectAppearance(index) {
+      sel.classList.toggle("atlas-region-pick__select--named", index > 0);
+    }
+
+    function matchRegionIndex(mlVal, apVal, dvVal) {
+      for (var i = 0; i < sel.options.length; i++) {
+        var o = sel.options[i];
+        if (!o.value) continue;
+        var oml = parseFloat(o.getAttribute("data-ml"));
+        var oap = parseFloat(o.getAttribute("data-ap"));
+        var odv = parseFloat(o.getAttribute("data-dv"));
+        if (
+          Number.isFinite(oml) &&
+          Number.isFinite(oap) &&
+          Number.isFinite(odv) &&
+          near(mlVal, oml) &&
+          near(apVal, oap) &&
+          near(dvVal, odv)
+        ) {
+          return i;
+        }
+      }
+      return 0;
+    }
+
+    function syncSelectFromMultiText() {
+      if (!isMultiInputMode()) return;
+      var ta = document.getElementById("atlas-multi-input");
+      if (!ta || !String(ta.value).trim()) {
+        sel.selectedIndex = 0;
+        updateRegionSelectAppearance(0);
+        return;
+      }
+
+      var rawLines = extractRawTargetLines(ta.value);
+      var parsed = parseTargetText(ta.value);
+      if (rawLines.length !== 1 || parsed.targets.length !== 1 || parsed.errors.length) {
+        sel.selectedIndex = 0;
+        updateRegionSelectAppearance(0);
+        return;
+      }
+
+      var t = parsed.targets[0];
+      var idx = matchRegionIndex(t.ml, t.ap, t.dv);
+      sel.selectedIndex = idx;
+      updateRegionSelectAppearance(idx);
+    }
+
+    function syncSelectFromUrl() {
+      if (isMultiInputMode()) {
+        syncSelectFromMultiText();
+        return;
+      }
+      var params = new URLSearchParams(window.location.search);
+      if (!params.has("ml") && !params.has("ap") && !params.has("dv")) {
+        sel.selectedIndex = 0;
+        updateRegionSelectAppearance(0);
+        return;
+      }
+      var nml = parseFloat(params.get("ml"));
+      var nap = parseFloat(params.get("ap"));
+      var ndv = parseFloat(params.get("dv"));
+      if (!Number.isFinite(nml) || !Number.isFinite(nap) || !Number.isFinite(ndv)) {
+        sel.selectedIndex = 0;
+        updateRegionSelectAppearance(0);
+        return;
+      }
+      var idx = matchRegionIndex(nml, nap, ndv);
+      sel.selectedIndex = idx;
+      updateRegionSelectAppearance(idx);
+    }
+
+    sel.addEventListener("change", function () {
+      var opt = sel.selectedOptions[0];
+      if (!opt) return;
+
+      if (isMultiInputMode()) {
+        var ta = document.getElementById("atlas-multi-input");
+        if (!ta) return;
+        if (!opt.value || opt.getAttribute("data-ap") === null) {
+          ta.value = "";
+          updateRegionSelectAppearance(0);
+        } else {
+          ta.value = serializeTarget({
+            ml: parseFloat(opt.getAttribute("data-ml")),
+            ap: parseFloat(opt.getAttribute("data-ap")),
+            dv: parseFloat(opt.getAttribute("data-dv")),
+            mode: "crosshair",
+            dir: "ml",
+            angle: 0,
+          });
+          updateRegionSelectAppearance(sel.selectedIndex);
+        }
+        applyMultiCoords();
+        return;
+      }
+
+      if (!opt.value || opt.getAttribute("data-ap") === null) {
+        ml.value = "0";
+        ap.value = "0";
+        dv.value = "0";
+        updateRegionSelectAppearance(0);
+      } else {
+        ml.value = opt.getAttribute("data-ml") || "0";
+        ap.value = opt.getAttribute("data-ap") || "0";
+        dv.value = opt.getAttribute("data-dv") || "0";
+        updateRegionSelectAppearance(sel.selectedIndex);
+      }
+      applyStandardCoords();
+    });
+
+    coordsChangeListeners.push(syncSelectFromUrl);
+    multiTargetsChangeListeners.push(syncSelectFromMultiText);
+    syncSelectFromUrl();
+  }
+
   function initBrainAtlasUi() {
     initInputModeToggle();
     initMarkerModeControls();
     initCopyMenu();
     initInputHelp();
     initMultiDemos();
+    initRegionPresets();
     initBrainAtlasFooter();
     updatePrintSettings();
     window.addEventListener("beforeprint", updatePrintSettings);

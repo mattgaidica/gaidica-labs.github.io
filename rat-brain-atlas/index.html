@@ -23,50 +23,9 @@ atlas_cite_book: "Paxinos, George, and Charles Watson. The rat brain in stereota
   <hr>
 
   <div id="atlas-panels-single">
-    <section class="atlas-panel page-break">
-      <div class="atlas-panel__header">
-        <h2 class="atlas-panel__title">
-          <span class="atlas-panel__title-text">Coronal</span>
-          {% include brain-atlas-slice-nav.html plane='coronal' %}
-        </h2>
-        {% include brain-atlas-panel-angle.html direction='ml' %}
-      </div>
-      <div class="figure">
-        <svg class="atlas-overlay-svg" id="coronal-overlay-svg" data-plane="coronal" aria-hidden="true" focusable="false">
-          <g class="atlas-targets"></g>
-        </svg>
-        <img id="coronal-img" src="" alt="Coronal section">
-      </div>
-    </section>
-
-    <section class="atlas-panel page-break">
-      <div class="atlas-panel__header">
-        <h2 class="atlas-panel__title">
-          <span class="atlas-panel__title-text">Sagittal</span>
-          {% include brain-atlas-slice-nav.html plane='sagittal' %}
-        </h2>
-        {% include brain-atlas-panel-angle.html direction='ap' %}
-      </div>
-      <div class="figure">
-        <svg class="atlas-overlay-svg" id="sagittal-overlay-svg" data-plane="sagittal" aria-hidden="true" focusable="false">
-          <g class="atlas-targets"></g>
-        </svg>
-        <img id="sagittal-img" src="" alt="Sagittal section">
-      </div>
-    </section>
-
-    <section class="atlas-panel">
-      <h2 class="atlas-panel__title">
-        <span class="atlas-panel__title-text">Horizontal</span>
-        {% include brain-atlas-slice-nav.html plane='horizontal' %}
-      </h2>
-      <div class="figure">
-        <svg class="atlas-overlay-svg" id="horizontal-overlay-svg" data-plane="horizontal" aria-hidden="true" focusable="false">
-          <g class="atlas-targets"></g>
-        </svg>
-        <img id="horizontal-img" src="" alt="Horizontal section">
-      </div>
-    </section>
+    {% include brain-atlas-panel.html plane='coronal' angle='ml' page_break=true %}
+    {% include brain-atlas-panel.html plane='sagittal' angle='ap' page_break=true %}
+    {% include brain-atlas-panel.html plane='horizontal' %}
   </div>
 
   <div id="atlas-panels-multi" hidden></div>

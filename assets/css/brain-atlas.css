@@ -170,6 +170,18 @@
   outline-offset: -2px;
 }
 
+.lab-brain-atlas .atlas-copy__menu-item--multi {
+  display: none;
+}
+
+.lab-brain-atlas.lab-brain-atlas--input-multi .atlas-copy__menu-item--standard {
+  display: none;
+}
+
+.lab-brain-atlas.lab-brain-atlas--input-multi .atlas-copy__menu-item--multi {
+  display: block;
+}
+
 .lab-brain-atlas .atlas-copy__status {
   pointer-events: none;
   margin: 0;

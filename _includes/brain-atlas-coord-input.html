@@ -14,8 +14,9 @@
     {% endif %}
     <div class="atlas-form-header__pick">
       {% if include.multi %}
-      {% include brain-atlas-region-select.html species='rat' %}
-      {% include brain-atlas-input-help.html multi=true %}
+      {% assign atlas_species = include.species | default: 'rat' %}
+      {% include brain-atlas-region-select.html species=atlas_species %}
+      {% include brain-atlas-input-help.html multi=true species=atlas_species %}
       {% else %}
       {% include brain-atlas-region-select.html species=include.species %}
       {% include brain-atlas-input-help.html %}
@@ -48,7 +49,7 @@
       </div>
     </div>
     {% if include.multi %}
-    {% include brain-atlas-toolbar.html species='rat' %}
+    {% include brain-atlas-toolbar.html species=atlas_species %}
     {% endif %}
   </div>
 

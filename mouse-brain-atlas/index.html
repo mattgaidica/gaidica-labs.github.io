@@ -18,35 +18,16 @@ atlas_cite_book: "Paxinos, George, and Keith B.J. Franklin. The mouse brain in s
   <p id="atlas-query-title" class="atlas-subtitle" hidden></p>
   <p id="atlas-error" class="atlas-subtitle" style="color: #c1121f" hidden></p>
 
-  {% include brain-atlas-coord-input.html species='mouse' %}
+  {% include brain-atlas-coord-input.html multi=true species='mouse' %}
 
   <hr>
 
-  <section class="atlas-panel page-break">
-    <h2 class="atlas-panel__title">
-      <span class="atlas-panel__title-text">Coronal</span>
-      {% include brain-atlas-slice-nav.html plane='coronal' %}
-    </h2>
-    <div class="figure">
-      <svg class="atlas-overlay-svg" id="coronal-overlay-svg" data-plane="coronal" aria-hidden="true" focusable="false">
-        <g class="atlas-targets"></g>
-      </svg>
-      <img id="coronal-img" src="" alt="Coronal section">
-    </div>
-  </section>
+  <div id="atlas-panels-single">
+    {% include brain-atlas-panel.html plane='coronal' angle='ml' page_break=true %}
+    {% include brain-atlas-panel.html plane='sagittal' angle='ap' %}
+  </div>
 
-  <section class="atlas-panel">
-    <h2 class="atlas-panel__title">
-      <span class="atlas-panel__title-text">Sagittal</span>
-      {% include brain-atlas-slice-nav.html plane='sagittal' %}
-    </h2>
-    <div class="figure">
-      <svg class="atlas-overlay-svg" id="sagittal-overlay-svg" data-plane="sagittal" aria-hidden="true" focusable="false">
-        <g class="atlas-targets"></g>
-      </svg>
-      <img id="sagittal-img" src="" alt="Sagittal section">
-    </div>
-  </section>
+  <div id="atlas-panels-multi" hidden></div>
 
   {% include brain-atlas-footer.html %}
 </div>
