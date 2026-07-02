@@ -352,7 +352,19 @@
     return window.location.origin + window.location.pathname + "?view=multi";
   }
 
+  function standardMarkerColor() {
+    try {
+      var body = document.body;
+      if (!body) return "#ef4444";
+      var raw = getComputedStyle(body).getPropertyValue("--atlas-marker-line").trim();
+      return raw || "#ef4444";
+    } catch (e) {
+      return "#ef4444";
+    }
+  }
+
   function targetColor(index) {
+    if (!isMultiInputMode()) return standardMarkerColor();
     var i = Math.max(0, Math.min(index, PARULA_16.length - 1));
     return PARULA_16[i];
   }
