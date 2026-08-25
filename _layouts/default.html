@@ -22,6 +22,9 @@
 </head>
 
 <body class="{{ page.body_class }}">
+    {% if page.body_class == 'lab-brain-atlas' %}
+    {% include brain-atlas-newsletter-banner.html %}
+    {% endif %}
     {{ content }}
     {% if page.lab_scripts %}
     {% for path in page.lab_scripts %}

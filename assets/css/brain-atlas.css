@@ -35,6 +35,84 @@
   line-height: 1.45;
 }
 
+.lab-brain-atlas .atlas-newsletter-banner {
+  --atlas-banner-fade: clamp(4rem, 22vw, 12rem);
+  position: relative;
+  isolation: isolate;
+  margin: 0 -1rem;
+  padding: 0.45rem 1rem;
+  text-align: center;
+  font-size: 0.8125rem;
+  letter-spacing: 0.01em;
+  color: var(--atlas-text);
+  background: transparent;
+}
+
+.lab-brain-atlas .atlas-newsletter-banner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: #fffbeb;
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    #000 var(--atlas-banner-fade),
+    #000 calc(100% - var(--atlas-banner-fade)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    #000 var(--atlas-banner-fade),
+    #000 calc(100% - var(--atlas-banner-fade)),
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+.lab-brain-atlas .atlas-newsletter-banner::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: rgba(180, 140, 20, 0.12);
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    #000 var(--atlas-banner-fade),
+    #000 calc(100% - var(--atlas-banner-fade)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    #000 var(--atlas-banner-fade),
+    #000 calc(100% - var(--atlas-banner-fade)),
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+.lab-brain-atlas .atlas-newsletter-banner__link {
+  color: var(--atlas-accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.lab-brain-atlas .atlas-newsletter-banner__link:hover,
+.lab-brain-atlas .atlas-newsletter-banner__link:focus-visible {
+  text-decoration: underline;
+  outline: none;
+}
+
+.lab-brain-atlas .atlas-newsletter-banner__sep {
+  margin: 0 0.55rem;
+  opacity: 0.45;
+}
+
 .lab-brain-atlas .atlas-inner {
   max-width: 960px;
   margin: 0 auto;
@@ -1497,7 +1575,8 @@
   .atlas-cite-status,
   .atlas-form-error,
   .atlas-slice-nav,
-  .atlas-panel-angle {
+  .atlas-panel-angle,
+  .atlas-newsletter-banner {
     display: none !important;
   }
 

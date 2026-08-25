@@ -3,3 +3,7 @@ github_username: mattgaidica
 
 # Set your GA4 Measurement ID (e.g. G-XXXXXXXXXX) to enable analytics on standalone lab pages.
 ga4_measurement_id: G-DRLK4MJJKG
+
+newsletter:
+  latest_url: https://us5.campaign-archive.com/?u=6391f76836f7cfd6d42fd5c61&id=a4aa26d0a9
+  subscribe_url: http://eepurl.com/itUVWw
